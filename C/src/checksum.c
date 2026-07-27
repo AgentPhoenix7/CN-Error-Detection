@@ -1,6 +1,7 @@
 #include "checksum.h"
 
-uint16_t checksum16_compute(const uint8_t *data, size_t length) {
+uint16_t checksum16_compute(const uint8_t *data, size_t length)
+{
   uint32_t sum = 0U;
   size_t index = 0U;
 
@@ -27,7 +28,12 @@ uint16_t checksum16_compute(const uint8_t *data, size_t length) {
   return (uint16_t)~sum;
 }
 
-bool checksum16_verify(const uint8_t *data, size_t length, uint16_t received_checksum) {
+bool checksum16_verify(
+  const uint8_t *data,
+  size_t length,
+  uint16_t received_checksum
+)
+{
   uint32_t sum;
 
   sum = (uint16_t)~checksum16_compute(data, length);

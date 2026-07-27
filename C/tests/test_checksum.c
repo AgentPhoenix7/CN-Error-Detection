@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static int test_even_length(void) {
+static int test_even_length(void)
+{
   const uint8_t data[] = {
     0x00, 0x01, 0xF2, 0x03,
     0xF4, 0xF5, 0xF6, 0xF7
@@ -28,7 +29,8 @@ static int test_even_length(void) {
   return 0;
 }
 
-static int test_odd_length(void) {
+static int test_odd_length(void)
+{
   const uint8_t data[] = {0x12, 0x34, 0x56};
   const uint16_t expected = 0x97CB;
   uint16_t actual;
@@ -49,7 +51,8 @@ static int test_odd_length(void) {
   return 0;
 }
 
-static int test_empty_input(void) {
+static int test_empty_input(void)
+{
   const uint16_t expected = UINT16_MAX;
   uint16_t actual;
 
@@ -69,7 +72,8 @@ static int test_empty_input(void) {
   return 0;
 }
 
-int main(void) {
+int main(void)
+{
   int failures = 0;
 
   failures += test_even_length();
