@@ -1,0 +1,40 @@
+# C build output
+/build/
+*.o
+*.obj
+*.a
+*.so
+*.out
+*.exe
+
+# Debugging and coverage files
+core
+core.*
+*.gcda
+*.gcno
+*.gcov
+*.log
+
+# Python plotting-tool cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor settings and temporary files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary experiment output
+/results/*.tmp
+/results/raw/
+
+# Generated report intermediates
+/report/*.aux
+/report/*.log
+/report/*.toc
+/report/*.out

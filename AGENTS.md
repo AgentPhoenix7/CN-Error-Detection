@@ -1,0 +1,43 @@
+# Repository Guidelines
+
+## Project Structure & Module Organization
+
+The repository root contains shared assignment references, including the specification PDFs, `instruction.jpg`, and the main `README.md`. Language implementations belong in separate directories; the active implementation is under `C/`.
+
+Within `C/`, public interfaces live in `include/`, implementations in `src/`, and module tests in `tests/`. Test inputs belong in `test_data/`. Generated experiment data and plots go in `results/`, plotting utilities in `tools/`, and written analysis in `report/`. Keep generated binaries and object files in `C/build/`.
+
+Future C++, Python, and Java work must remain in their corresponding top-level directories, with independent build files and `.gitignore` rules.
+
+## Build, Test, and Development Commands
+
+Run commands from the repository root. The C Makefile is currently a scaffold, so use strict manual compilation while targets are being added:
+
+```bash
+gcc -std=c17 -Wall -Wextra -Wpedantic -Werror \
+  -IC/include -c C/src/checksum.c -o /tmp/checksum.o
+```
+
+When `C/Makefile` is populated, preserve a simple interface:
+
+```bash
+make -C C all             # build sender, receiver, and tests
+make -C C test            # run all C tests
+make -C C test_checksum   # run one module's tests
+make -C C clean           # remove generated C build output
+```
+
+## Coding Style & Naming Conventions
+
+Use C17, four-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations; source files contain implementations.
+
+## Testing Guidelines
+
+Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. Every source change must compile with strict warnings and pass the affected tests before continuing.
+
+## Commit & Pull Request Guidelines
+
+No commit history exists yet, so no established convention can be inferred. Use short, imperative, scoped messages, for example `feat(c): add checksum verification`. Pull requests should explain the change, identify affected modules, list executed tests, and link relevant issues. Include screenshots only for graphs or report-rendering changes.
+
+## Agent-Specific Instructions
+
+Treat this as a guided learning project. Do not implement code unless explicitly requested. For every suggested snippet, explain what it does, why it is needed, how it integrates, and how the user can test it immediately.
