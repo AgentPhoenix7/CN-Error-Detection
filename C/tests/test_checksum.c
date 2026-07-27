@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static int test_even_length(void) {
+static int test_even_length(void)
+{
   const uint8_t data[] = {
     0x00, 0x01, 0xF2, 0x03,
     0xF4, 0xF5, 0xF6, 0xF7
@@ -27,6 +28,7 @@ static int test_even_length(void) {
   return 0;
 }
 
-int main(void) {
+int main(void)
+{
   return test_even_length();
 }

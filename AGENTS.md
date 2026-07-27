@@ -28,7 +28,7 @@ make -C C clean           # remove generated C build output
 
 ## Coding Style & Naming Conventions
 
-Use C17, four-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations; source files contain implementations.
+Use C17, two-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations; source files contain implementations.
 
 ## Testing Guidelines
 
