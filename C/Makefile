@@ -13,13 +13,13 @@ all: $(CHECKSUM_TEST)
 test: test_checksum
 
 test_checksum: $(CHECKSUM_TEST)
-  ./$(CHECKSUM_TEST)
+	./$(CHECKSUM_TEST)
 
 $(CHECKSUM_TEST): $(CHECKSUM_TEST_SOURCES) include/checksum.h | $(BUILD_DIR)
-  $(CC) $(CPPFLAGS) $(CFLAGS) $(CHECKSUM_TEST_SOURCES) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CHECKSUM_TEST_SOURCES) -o $@
 
 $(BUILD_DIR):
-  mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
 clean:
-  rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
