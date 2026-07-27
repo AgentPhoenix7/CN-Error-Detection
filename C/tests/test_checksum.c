@@ -1,5 +1,6 @@
 #include "checksum.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -48,10 +49,31 @@ static int test_odd_length(void) {
   return 0;
 }
 
+static int test_empty_input(void) {
+  const uint16_t expected = UINT16_MAX;
+  uint16_t actual;
+
+  actual = checksum16_compute(NULL, 0U);
+
+  if (actual != expected) {
+    fprintf(
+      stderr,
+      "FAIL empty input: expected 0x%04X, received 0x%04X\n",
+      (unsigned int)expected,
+      (unsigned int)actual
+    );
+    return 1;
+  }
+
+  puts("PASS: empty-input checksum");
+  return 0;
+}
+
 int main(void) {
   int failures = 0;
 
   failures += test_even_length();
   failures += test_odd_length();
+  failures += test_empty_input();
   return failures == 0 ? 0 : 1;
 }
