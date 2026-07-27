@@ -18,9 +18,9 @@ uint16_t checksum16_compute(const uint8_t *data, size_t length);
  * detectable error; otherwise returns false.
 */
 bool checksum16_verify(
-    const uint8_t *data,
-    size_t length,
-    uint16_t received_checksum
+  const uint8_t *data,
+  size_t length,
+  uint16_t received_checksum
 );
 
 #endif /* CHECKSUM_H */
