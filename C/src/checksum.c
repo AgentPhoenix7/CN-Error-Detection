@@ -26,3 +26,13 @@ uint16_t checksum16_compute(const uint8_t *data, size_t length) {
 
   return (uint16_t)~sum;
 }
+
+bool checksum16_verify(const uint8_t *data, size_t length, uint16_t received_checksum) {
+  uint32_t sum;
+
+  sum = (uint16_t)~checksum16_compute(data, length);
+  sum += received_checksum;
+  sum = (sum & UINT16_MAX) + (sum >> 16U);
+
+  return sum == UINT16_MAX;
+}
