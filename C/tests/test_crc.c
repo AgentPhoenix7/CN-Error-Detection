@@ -207,6 +207,22 @@ static int test_corrupted_crc_verification(void)
   return 0;
 }
 
+static int test_empty_verification(void)
+{
+  if (!crc_verify(
+        NULL,
+        0U,
+        0U,
+        &crc32_parameters
+      )) {
+    fputs("FAIL: valid empty CRC input was rejected\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: empty-input CRC verification");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -243,6 +259,7 @@ int main(void)
   failures += test_valid_crc8_verification();
   failures += test_corrupted_data_verification();
   failures += test_corrupted_crc_verification();
+  failures += test_empty_verification();
 
   return failures == 0 ? 0 : 1;
 }
