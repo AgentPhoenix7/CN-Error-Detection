@@ -46,4 +46,23 @@ bool error_injection_flip_two_bits(
   size_t second_bit_index
 );
 
+/**
+ * @brief Flips an odd number of distinct specified bits.
+ *
+ * All indices are validated before any data is modified. Bit index zero
+ * identifies the most-significant bit of `data[0]`.
+ *
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] bit_indices Array of zero-based bit positions.
+ * @param[in] bit_count Number of positions; it must be positive and odd.
+ * @return `true` when every specified bit was flipped; otherwise `false`.
+ */
+bool error_injection_flip_odd_bits(
+  uint8_t *data,
+  size_t length,
+  const size_t *bit_indices,
+  size_t bit_count
+);
+
 #endif
