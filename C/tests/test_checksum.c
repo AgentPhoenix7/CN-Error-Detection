@@ -139,6 +139,17 @@ static int test_corrupted_checksum_verification(void)
   return 0;
 }
 
+static int test_empty_verification(void)
+{
+  if (!checksum16_verify(NULL, 0U, UINT16_MAX)) {
+    fputs("FAIL: valid empty input was rejected\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: empty-input verification");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -149,5 +160,6 @@ int main(void)
   failures += test_valid_verification();
   failures += test_corrupted_data_verification();
   failures += test_corrupted_checksum_verification();
+  failures += test_empty_verification();
   return failures == 0 ? 0 : 1;
 }
