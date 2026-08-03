@@ -27,4 +27,23 @@ bool error_injection_flip_bit(
   size_t bit_index
 );
 
+/**
+ * @brief Flips two distinct specified bits in a byte array.
+ * 
+ * Bit index zero identifies the most-significant bit of `data[0]`.
+ * No data is modified when either index is invalid or the indices match.
+ * 
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] first_bit_index First zero-based bit position.
+ * @param[in] second_bit_index Second zero-based bit position.
+ * @return `true` when both bits were flipped; otherwise `false`.
+ */
+bool error_injection_flip_two_bits(
+  uint8_t *data,
+  size_t length,
+  size_t first_bit_index,
+  size_t second_bit_index
+);
+
 #endif
