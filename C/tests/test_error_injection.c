@@ -118,6 +118,30 @@ static int test_flip_two_separated_bits(void)
   return 0;
 }
 
+static int test_reject_duplicate_bit_indices(void)
+{
+  uint8_t data[] = {UINT8_C(0xA5)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_two_bits(
+        data,
+        sizeof data,
+        3U,
+        3U
+      )) {
+    fputs("FAIL: duplicate bit indices were accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: duplicate indices modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject duplicate bit indices");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -127,6 +151,7 @@ int main(void)
   failures += test_reject_out_of_range_bit();
   failures += test_reject_null_data();
   failures += test_flip_two_separated_bits();
+  failures += test_reject_duplicate_bit_indices();
 
   return failures == 0 ? 0 : 1;
 }
