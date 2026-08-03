@@ -21,6 +21,27 @@ static int test_parameters(
   return 0;
 }
 
+static int test_empty_input(void)
+{
+  const uint32_t expected = 0U;
+  uint32_t actual;
+
+  actual = crc_compute(NULL, 0U, &crc32_parameters);
+
+  if (actual != expected) {
+    fprintf(
+      stderr,
+      "FAIL empty input: expected 0x%08X, received 0x%08X\n",
+      (unsigned int)expected,
+      (unsigned int)actual
+    );
+    return 1;
+  }
+
+  puts("PASS: empty-input CRC");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -49,6 +70,7 @@ int main(void)
     32U,
     UINT32_C(0x04C11DB7)
   );
+  failures += test_empty_input();
 
   return failures == 0 ? 0 : 1;
 }
