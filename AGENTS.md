@@ -16,6 +16,7 @@ Run commands from the repository root. Preserve the Makefile's simple interface 
 make -C C all               # build or validate current modules
 make -C C test              # run all available C checks
 make -C C test_checksum     # run checksum tests
+make -C C test_crc          # run CRC tests
 make -C C check_crc_header  # validate the CRC interface
 make -C C clean             # remove generated C build output
 ```
