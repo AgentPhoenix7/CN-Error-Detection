@@ -3,6 +3,7 @@ CPPFLAGS := -Iinclude
 CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Werror
 
 BUILD_DIR := build
+CONFIG_HEADER := include/config.h
 CHECKSUM_TEST := $(BUILD_DIR)/test_checksum
 CHECKSUM_TEST_SOURCES := src/checksum.c tests/test_checksum.c
 CRC_TEST := $(BUILD_DIR)/test_crc
@@ -12,11 +13,14 @@ ERROR_INJECTION_TEST := $(BUILD_DIR)/test_error_injection
 ERROR_INJECTION_TEST_SOURCES := src/error_injection.c tests/test_error_injection.c
 ERROR_INJECTION_HEADER := include/error_injection.h
 
-.PHONY: all test test_checksum test_crc test_error_injection check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection check_config_header check_crc_header clean
 
-all: $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST)
+all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST)
 
-test: test_checksum test_crc test_error_injection
+test: check_config_header test_checksum test_crc test_error_injection
+
+check_config_header: $(CONFIG_HEADER)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -x c -fsyntax-only $(CONFIG_HEADER)
 
 test_checksum: $(CHECKSUM_TEST)
 	./$(CHECKSUM_TEST)

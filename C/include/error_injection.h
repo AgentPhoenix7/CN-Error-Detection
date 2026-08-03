@@ -29,10 +29,10 @@ bool error_injection_flip_bit(
 
 /**
  * @brief Flips two distinct specified bits in a byte array.
- * 
+ *
  * Bit index zero identifies the most-significant bit of `data[0]`.
  * No data is modified when either index is invalid or the indices match.
- * 
+ *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
  * @param[in] first_bit_index First zero-based bit position.

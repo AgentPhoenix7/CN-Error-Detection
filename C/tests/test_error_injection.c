@@ -166,6 +166,17 @@ static int test_reject_partially_invalid_two_bit_pattern(void)
   return 0;
 }
 
+static int test_reject_null_two_bit_data(void)
+{
+  if (error_injection_flip_two_bits(NULL, 0U, 0U, 1U)) {
+    fputs("FAIL: null two-bit data was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null two-bit data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -177,6 +188,7 @@ int main(void)
   failures += test_flip_two_separated_bits();
   failures += test_reject_duplicate_bit_indices();
   failures += test_reject_partially_invalid_two_bit_pattern();
+  failures += test_reject_null_two_bit_data();
 
   return failures == 0 ? 0 : 1;
 }

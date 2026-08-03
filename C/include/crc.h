@@ -59,7 +59,7 @@ uint32_t crc_compute(
 
 /**
  * @brief Verifies data against a received CRC remainder.
- * 
+ *
  * @param[in] data Pointer to the received data. It may be `NULL` only when
  *                 `length` is zero.
  * @param[in] length Number of bytes in `data`.
