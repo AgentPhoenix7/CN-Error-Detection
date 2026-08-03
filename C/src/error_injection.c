@@ -52,3 +52,49 @@ bool error_injection_flip_two_bits(
 
   return true;
 }
+
+bool error_injection_flip_odd_bits(
+  uint8_t *data,
+  size_t length,
+  const size_t *bit_indices,
+  size_t bit_count
+)
+{
+  size_t index;
+  size_t previous_index;
+
+  if (
+    data == NULL ||
+    bit_indices == NULL ||
+    bit_count == 0U ||
+    bit_count % 2U == 0U
+  ) {
+    return false;
+  }
+
+  for (index = 0U; index < bit_count; index++) {
+    if (bit_indices[index] / 8U >= length) {
+      return false;
+    }
+
+    for (
+      previous_index = 0U;
+      previous_index < index;
+      previous_index++
+    ) {
+      if (bit_indices[index] == bit_indices[previous_index]) {
+        return false;
+      }
+    }
+  }
+
+  for (index = 0U; index < bit_count; index++) {
+    (void)error_injection_flip_bit(
+      data,
+      length,
+      bit_indices[index]
+    );
+  }
+
+  return true;
+}

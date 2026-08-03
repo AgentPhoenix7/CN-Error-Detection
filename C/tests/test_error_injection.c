@@ -196,7 +196,7 @@ static int test_flip_three_separated_bits(void)
   }
 
   if (
-    data[0] != UINT8_C(0x01) ||
+    data[0] != UINT8_C(0x81) ||
     data[1] != UINT8_C(0x08)
   ) {
     fputs("FAIL: incorrect odd-bit modification\n", stderr);
