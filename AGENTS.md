@@ -10,25 +10,19 @@ Future C++, Python, and Java work must remain in their corresponding top-level d
 
 ## Build, Test, and Development Commands
 
-Run commands from the repository root. The C Makefile is currently a scaffold, so use strict manual compilation while targets are being added:
+Run commands from the repository root. Preserve the Makefile's simple interface as modules are added:
 
 ```bash
-gcc -std=c17 -Wall -Wextra -Wpedantic -Werror \
-  -IC/include -c C/src/checksum.c -o /tmp/checksum.o
-```
-
-When `C/Makefile` is populated, preserve a simple interface:
-
-```bash
-make -C C all             # build sender, receiver, and tests
-make -C C test            # run all C tests
-make -C C test_checksum   # run one module's tests
-make -C C clean           # remove generated C build output
+make -C C all               # build or validate current modules
+make -C C test              # run all available C checks
+make -C C test_checksum     # run checksum tests
+make -C C check_crc_header  # validate the CRC interface
+make -C C clean             # remove generated C build output
 ```
 
 ## Coding Style & Naming Conventions
 
-Use C17, two-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations; source files contain implementations.
+Use C17, two-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations and Doxygen `/** ... */` API documentation; source files contain implementations.
 
 ## Testing Guidelines
 
