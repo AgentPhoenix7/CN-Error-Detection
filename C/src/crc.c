@@ -73,3 +73,13 @@ uint32_t crc_compute(
 
   return remainder & width_mask;
 }
+
+bool crc_verify(
+  const uint8_t *data,
+  size_t length,
+  uint32_t received_crc,
+  const crc_parameters_t *parameters
+)
+{
+  return crc_compute(data, length, parameters) == received_crc;
+}

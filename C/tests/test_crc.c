@@ -146,6 +146,25 @@ static int test_crc32_known_vector(void)
   return 0;
 }
 
+static int test_valid_crc8_verification(void)
+{
+  const uint8_t data[] = "123456789";
+  const uint32_t received_crc = UINT32_C(0xBC);
+
+  if (!crc_verify(
+        data,
+        sizeof data - 1U,
+        received_crc,
+        &crc8_parameters
+      )) {
+    fputs("FAIL: valid CRC-8 was rejected\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: valid CRC-8 verification");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -179,6 +198,7 @@ int main(void)
   failures += test_crc10_known_vector();
   failures += test_crc16_known_vector();
   failures += test_crc32_known_vector();
+  failures += test_valid_crc8_verification();
 
   return failures == 0 ? 0 : 1;
 }
