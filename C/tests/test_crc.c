@@ -165,6 +165,27 @@ static int test_valid_crc8_verification(void)
   return 0;
 }
 
+static int test_corrupted_data_verification(void)
+{
+  uint8_t data[] = "123456789";
+  const uint32_t received_crc = UINT32_C(0xBC);
+
+  data[3] ^= UINT8_C(0x01);
+
+  if (crc_verify(
+        data,
+        sizeof data - 1U,
+        received_crc,
+        &crc8_parameters
+      )) {
+    fputs("FAIL: corrupted CRC-8 data was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: corrupted CRC-8 data verification");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -199,6 +220,7 @@ int main(void)
   failures += test_crc16_known_vector();
   failures += test_crc32_known_vector();
   failures += test_valid_crc8_verification();
+  failures += test_corrupted_data_verification();
 
   return failures == 0 ? 0 : 1;
 }
