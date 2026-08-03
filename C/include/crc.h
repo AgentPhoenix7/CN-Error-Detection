@@ -57,4 +57,25 @@ uint32_t crc_compute(
   const crc_parameters_t *parameters
 );
 
+/**
+ * @brief Verifies data against a received CRC remainder.
+ * 
+ * @param[in] data Pointer to the received data. It may be `NULL` only when
+ *                 `length` is zero.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] received_crc CRC remainder received with the data.
+ * @param[in] parameters CRC width and generator polynomial to use.
+ * @return `true` when the calculated and received remainders match;
+ *         otherwise `false`.
+ *
+ * @pre `parameters` must not be `NULL`.
+ * @pre `parameters->width` must be between 1 and 32.
+ */
+bool crc_verify(
+  const uint8_t *data,
+  size_t length,
+  uint32_t received_crc,
+  const crc_parameters_t *parameters
+);
+
 #endif
