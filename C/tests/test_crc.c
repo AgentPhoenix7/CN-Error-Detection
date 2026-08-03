@@ -68,6 +68,32 @@ static int test_crc8_known_vector(void)
   return 0;
 }
 
+static int test_crc10_known_vector(void)
+{
+  const uint8_t data[] = "123456789";
+  const uint32_t expected = UINT32_C(0x199);
+  uint32_t actual;
+
+  actual = crc_compute(
+    data,
+    sizeof data - 1U,
+    &crc10_parameters
+  );
+
+  if (actual != expected) {
+    fprintf(
+      stderr,
+      "FAIL CRC-10 vector: expected 0x%03X, received 0x%03X\n",
+      (unsigned int)expected,
+      (unsigned int)actual
+    );
+    return 1;
+  }
+
+  puts("PASS: CRC-10 known vector");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -98,6 +124,7 @@ int main(void)
   );
   failures += test_empty_input();
   failures += test_crc8_known_vector();
+  failures += test_crc10_known_vector();
 
   return failures == 0 ? 0 : 1;
 }
