@@ -207,6 +207,31 @@ static int test_flip_three_separated_bits(void)
   return 0;
 }
 
+static int test_reject_even_bit_count(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+  const size_t bit_indices[] = {0U, 7U};
+
+  if (error_injection_flip_odd_bits(
+        data,
+        sizeof data,
+        bit_indices,
+        sizeof bit_indices / sizeof bit_indices[0]
+      )) {
+    fputs("FAIL: even bit count was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: rejected even pattern modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject even bit count");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -220,6 +245,7 @@ int main(void)
   failures += test_reject_partially_invalid_two_bit_pattern();
   failures += test_reject_null_two_bit_data();
   failures += test_flip_three_separated_bits();
+  failures += test_reject_even_bit_count();
 
   return failures == 0 ? 0 : 1;
 }
