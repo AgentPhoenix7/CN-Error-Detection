@@ -55,12 +55,36 @@ static int test_flip_last_bit(void)
   return 0;
 }
 
+static int test_reject_out_of_range_bit(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_bit(
+        data,
+        sizeof data,
+        8U
+      )) {
+    fputs("FAIL: out-of-range bit was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: rejected operation modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject out-of-range bit");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
 
   failures += test_flip_first_bit();
   failures += test_flip_last_bit();
+  failures += test_reject_out_of_range_bit();
 
   return failures == 0 ? 0 : 1;
 }
