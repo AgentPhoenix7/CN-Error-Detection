@@ -13,3 +13,6 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Agent and editor progress files
+PROGRESS.md
