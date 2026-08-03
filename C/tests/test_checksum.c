@@ -116,6 +116,29 @@ static int test_corrupted_data_verification(void)
   return 0;
 }
 
+static int test_corrupted_checksum_verification(void)
+{
+  const uint8_t data[] = {
+    0x00, 0x01, 0xF2, 0x03,
+    0xF4, 0xF5, 0xF6, 0xF7
+  };
+  uint16_t received_checksum = 0x220D;
+
+  received_checksum ^= 0x0001U;
+
+  if (checksum16_verify(
+        data,
+        sizeof data,
+        received_checksum
+      )) {
+    fputs("FAIL: corrupted checksum was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: corrupted checksum verification");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -125,5 +148,6 @@ int main(void)
   failures += test_empty_input();
   failures += test_valid_verification();
   failures += test_corrupted_data_verification();
+  failures += test_corrupted_checksum_verification();
   return failures == 0 ? 0 : 1;
 }
