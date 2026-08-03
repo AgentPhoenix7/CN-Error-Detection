@@ -142,6 +142,30 @@ static int test_reject_duplicate_bit_indices(void)
   return 0;
 }
 
+static int test_reject_partially_invalid_two_bit_pattern(void)
+{
+  uint8_t data[] = {UINT8_C(0x00)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_two_bits(
+        data,
+        sizeof data,
+        0U,
+        8U
+      )) {
+    fputs("FAIL: partially invalid pattern was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: partially invalid pattern modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject partially invalid two-bit pattern");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -152,6 +176,7 @@ int main(void)
   failures += test_reject_null_data();
   failures += test_flip_two_separated_bits();
   failures += test_reject_duplicate_bit_indices();
+  failures += test_reject_partially_invalid_two_bit_pattern();
 
   return failures == 0 ? 0 : 1;
 }
