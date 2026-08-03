@@ -78,6 +78,17 @@ static int test_reject_out_of_range_bit(void)
   return 0;
 }
 
+static int test_reject_null_data(void)
+{
+  if (error_injection_flip_bit(NULL, 0U, 0U)) {
+    fputs("FAIL: null data was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -85,6 +96,7 @@ int main(void)
   failures += test_flip_first_bit();
   failures += test_flip_last_bit();
   failures += test_reject_out_of_range_bit();
+  failures += test_reject_null_data();
 
   return failures == 0 ? 0 : 1;
 }
