@@ -39,4 +39,22 @@ extern const crc_parameters_t crc16_parameters;
  */
 extern const crc_parameters_t crc32_parameters;
 
+/**
+ * @brief Calculates a CRC remainder for a byte array.
+ *
+ * @param[in] data Pointer to the input bytes. It may be `NULL` only when
+ *                 `length` is zero.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] parameters CRC width and generator polynomial to use.
+ * @return The calculated remainder in the lowest `parameters->width` bits.
+ *
+ * @pre `parameters` must not be `NULL`.
+ * @pre `parameters->width` must be between 1 and 32.
+ */
+uint32_t crc_compute(
+  const uint8_t *data,
+  size_t length,
+  const crc_parameters_t *parameters
+);
+
 #endif
