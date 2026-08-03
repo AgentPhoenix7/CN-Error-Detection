@@ -177,6 +177,36 @@ static int test_reject_null_two_bit_data(void)
   return 0;
 }
 
+static int test_flip_three_separated_bits(void)
+{
+  uint8_t data[] = {
+    UINT8_C(0x00),
+    UINT8_C(0x00)
+  };
+  const size_t bit_indices[] = {0U, 7U, 12U};
+
+  if (!error_injection_flip_odd_bits(
+        data,
+        sizeof data,
+        bit_indices,
+        sizeof bit_indices / sizeof bit_indices[0]
+      )) {
+    fputs("FAIL: valid odd-bit pattern was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    data[0] != UINT8_C(0x01) ||
+    data[1] != UINT8_C(0x08)
+  ) {
+    fputs("FAIL: incorrect odd-bit modification\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: flip three separated bits");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -189,6 +219,7 @@ int main(void)
   failures += test_reject_duplicate_bit_indices();
   failures += test_reject_partially_invalid_two_bit_pattern();
   failures += test_reject_null_two_bit_data();
+  failures += test_flip_three_separated_bits();
 
   return failures == 0 ? 0 : 1;
 }
