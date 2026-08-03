@@ -89,6 +89,35 @@ static int test_reject_null_data(void)
   return 0;
 }
 
+static int test_flip_two_separated_bits(void)
+{
+  uint8_t data[] = {
+    UINT8_C(0x00),
+    UINT8_C(0x00)
+  };
+
+  if (!error_injection_flip_two_bits(
+        data,
+        sizeof data,
+        1U,
+        14U
+      )) {
+    fputs("FAIL: valid two-bit pattern was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    data[0] != UINT8_C(0x40) ||
+    data[1] != UINT8_C(0x02)
+  ) {
+    fputs("FAIL: incorrect two-bit modification\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: flip two separated bits");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -97,6 +126,7 @@ int main(void)
   failures += test_flip_last_bit();
   failures += test_reject_out_of_range_bit();
   failures += test_reject_null_data();
+  failures += test_flip_two_separated_bits();
 
   return failures == 0 ? 0 : 1;
 }

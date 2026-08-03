@@ -22,3 +22,33 @@ bool error_injection_flip_bit(
 
   return true;
 }
+
+bool error_injection_flip_two_bits(
+  uint8_t *data,
+  size_t length,
+  size_t first_bit_index,
+  size_t second_bit_index
+)
+{
+  if (
+    data == NULL ||
+    first_bit_index == second_bit_index ||
+    first_bit_index / 8U >= length ||
+    second_bit_index / 8U >= length
+  ) {
+    return false;
+  }
+
+  (void)error_injection_flip_bit(
+    data,
+    length,
+    first_bit_index
+  );
+  (void)error_injection_flip_bit(
+    data,
+    length,
+    second_bit_index
+  );
+
+  return true;
+}
