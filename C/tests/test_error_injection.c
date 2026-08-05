@@ -282,6 +282,30 @@ static int test_reject_duplicate_odd_bit_indices(void)
   return 0;
 }
 
+static int test_reject_null_odd_bit_indices(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_odd_bits(
+        data,
+        sizeof data,
+        NULL,
+        3U
+      )) {
+    fputs("FAIL: null odd-bit indices were accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: null odd indices modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null odd-bit indices");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -298,6 +322,7 @@ int main(void)
   failures += test_reject_even_bit_count();
   failures += test_reject_invalid_odd_bit_pattern();
   failures += test_reject_duplicate_odd_bit_indices();
+  failures += test_reject_null_odd_bit_indices();
 
   return failures == 0 ? 0 : 1;
 }
