@@ -257,6 +257,31 @@ static int test_reject_invalid_odd_bit_pattern(void)
   return 0;
 }
 
+static int test_reject_duplicate_odd_bit_indices(void)
+{
+  uint8_t data[] = {UINT8_C(0xA5)};
+  const uint8_t expected = data[0];
+  const size_t bit_indices[] = {0U, 3U, 3U};
+
+  if (error_injection_flip_odd_bits(
+        data,
+        sizeof data,
+        bit_indices,
+        sizeof bit_indices / sizeof bit_indices[0]
+      )) {
+    fputs("FAIL: duplicate odd-bit indices were accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: duplicate odd indices modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject duplicate odd-bit indices");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -272,6 +297,7 @@ int main(void)
   failures += test_flip_three_separated_bits();
   failures += test_reject_even_bit_count();
   failures += test_reject_invalid_odd_bit_pattern();
+  failures += test_reject_duplicate_odd_bit_indices();
 
   return failures == 0 ? 0 : 1;
 }
