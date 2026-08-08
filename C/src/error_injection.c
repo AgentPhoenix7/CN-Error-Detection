@@ -55,6 +55,49 @@ bool error_injection_flip_random_bit(
   );
 }
 
+bool error_injection_flip_random_two_bits(
+  uint8_t *data,
+  size_t length,
+  error_injection_rng_t *rng
+)
+{
+  size_t bit_count;
+  size_t first_bit_index;
+  size_t second_bit_index;
+  size_t separation;
+
+  if (
+    data == NULL ||
+    rng == NULL ||
+    length == 0U ||
+    length > SIZE_MAX / 8U
+  ) {
+    return false;
+  }
+
+  bit_count = length * 8U;
+  first_bit_index =
+    (size_t)error_injection_rng_next(rng) % bit_count;
+
+  do {
+    second_bit_index =
+      (size_t)error_injection_rng_next(rng) % bit_count;
+
+    if (first_bit_index > second_bit_index) {
+      separation = first_bit_index - second_bit_index;
+    } else {
+      separation = second_bit_index - first_bit_index;
+    }
+  } while (separation <= 1U);
+
+  return error_injection_flip_two_bits(
+    data,
+    length,
+    first_bit_index,
+    second_bit_index
+  );
+}
+
 bool error_injection_flip_bit(
   uint8_t *data,
   size_t length,
