@@ -509,6 +509,20 @@ static int test_seed_rng_state(void)
   return 0;
 }
 
+static int test_reject_null_rng_state(void)
+{
+  if (error_injection_rng_seed(
+        NULL,
+        UINT32_C(0x12345678)
+      )) {
+    fputs("FAIL: null RNG state was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null RNG state");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -535,6 +549,7 @@ int main(void)
   failures += test_reject_null_burst_data();
   failures += test_reject_overflowing_burst_range();
   failures += test_seed_rng_state();
+  failures += test_reject_null_rng_state();
 
   return failures == 0 ? 0 : 1;
 }
