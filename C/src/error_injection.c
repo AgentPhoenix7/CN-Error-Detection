@@ -1,5 +1,19 @@
 #include "error_injection.h"
 
+bool error_injection_rng_seed(
+  error_injection_rng_t *rng,
+  uint32_t seed
+)
+{
+  if (rng == NULL) {
+    return false;
+  }
+
+  rng->state = seed;
+
+  return true;
+}
+
 bool error_injection_flip_bit(
   uint8_t *data,
   size_t length,
