@@ -1,0 +1,9 @@
+[project]
+name = "error-detection-experiments"
+version = "0.1.0"
+description = "Reproducible experiment and plotting tools for Assignment 1"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
