@@ -98,3 +98,39 @@ bool error_injection_flip_odd_bits(
 
   return true;
 }
+
+bool error_injection_flip_burst(
+  uint8_t *data,
+  size_t length,
+  size_t start_bit_index,
+  size_t burst_length
+)
+{
+  size_t final_bit_index;
+  size_t offset;
+
+  if (
+    data == NULL ||
+    burst_length == 0U ||
+    start_bit_index / 8U >= length ||
+    burst_length - 1U > SIZE_MAX - start_bit_index
+  ) {
+    return false;
+  }
+
+  final_bit_index = start_bit_index + burst_length - 1U;
+
+  if (final_bit_index / 8U >= length) {
+    return false;
+  }
+
+  for (offset = 0U; offset < burst_length; offset++) {
+    (void)error_injection_flip_bit(
+      data,
+      length,
+      start_bit_index + offset
+    );
+  }
+
+  return true;
+}
