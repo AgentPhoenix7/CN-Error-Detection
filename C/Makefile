@@ -12,12 +12,15 @@ CRC_HEADER := include/crc.h
 ERROR_INJECTION_TEST := $(BUILD_DIR)/test_error_injection
 ERROR_INJECTION_TEST_SOURCES := src/error_injection.c tests/test_error_injection.c
 ERROR_INJECTION_HEADER := include/error_injection.h
+FRAME_TEST := $(BUILD_DIR)/test_frame
+FRAME_TEST_SOURCES := src/frame.c tests/test_frame.c
+FRAME_HEADER := include/frame.h
 
-.PHONY: all test test_checksum test_crc test_error_injection check_config_header check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection test_frame check_config_header check_crc_header clean
 
-all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST)
+all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST) $(FRAME_TEST)
 
-test: check_config_header test_checksum test_crc test_error_injection
+test: check_config_header test_checksum test_crc test_error_injection test_frame
 
 check_config_header: $(CONFIG_HEADER)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -x c -fsyntax-only $(CONFIG_HEADER)
@@ -42,6 +45,12 @@ test_error_injection: $(ERROR_INJECTION_TEST)
 
 $(ERROR_INJECTION_TEST): $(ERROR_INJECTION_TEST_SOURCES) $(ERROR_INJECTION_HEADER) | $(BUILD_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(ERROR_INJECTION_TEST_SOURCES) -o $@
+
+test_frame: $(FRAME_TEST)
+	./$(FRAME_TEST)
+
+$(FRAME_TEST): $(FRAME_TEST_SOURCES) $(FRAME_HEADER) $(CONFIG_HEADER) | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(FRAME_TEST_SOURCES) -o $@
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
