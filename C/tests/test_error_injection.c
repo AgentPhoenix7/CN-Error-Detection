@@ -476,7 +476,7 @@ static int test_reject_overflowing_burst_range(void)
         sizeof data,
         7U,
         SIZE_MAX
-  )) {
+      )) {
     fputs("FAIL: overflowing burst range was accepted\n", stderr);
     return 1;
   }
