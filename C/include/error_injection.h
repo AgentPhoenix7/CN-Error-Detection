@@ -65,4 +65,23 @@ bool error_injection_flip_odd_bits(
   size_t bit_count
 );
 
+/**
+ * @brief Flips every bit in a contiguous burst.
+ *
+ * Bit index zero identifies the most-significant bit of `data[0]`.
+ * The complete range is validated before any data is modified.
+ *
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] start_bit_index First bit in the burst.
+ * @param[in] burst_length Positive number of consecutive bits to flip.
+ * @return `true` when the complete burst was applied; otherwise `false`.
+ */
+bool error_injection_flip_burst(
+  uint8_t *data,
+  size_t length,
+  size_t start_bit_index,
+  size_t burst_length
+);
+
 #endif
