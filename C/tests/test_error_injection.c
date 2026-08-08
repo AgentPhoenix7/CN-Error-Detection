@@ -450,6 +450,22 @@ static int test_reject_overrunning_burst(void)
   return 0;
 }
 
+static int test_reject_null_burst_data(void)
+{
+  if (error_injection_flip_burst(
+        NULL,
+        1U,
+        0U,
+        1U
+      )) {
+    fputs("FAIL: null burst data was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null burst data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -473,6 +489,7 @@ int main(void)
   failures += test_reject_zero_length_burst();
   failures += test_reject_out_of_range_burst_start();
   failures += test_reject_overrunning_burst();
+  failures += test_reject_null_burst_data();
 
   return failures == 0 ? 0 : 1;
 }
