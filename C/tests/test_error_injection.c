@@ -990,6 +990,42 @@ static int test_reject_overflowing_random_odd_bit_length(void)
   return 0;
 }
 
+static int test_reject_zero_random_odd_bit_count(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint8_t expected = data[0];
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: zero-count odd-bit RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_odd_bits(
+        data,
+        sizeof data,
+        0U,
+        &rng
+      )) {
+    fputs("FAIL: zero random odd-bit count was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: zero count modified random odd-bit data\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: zero count advanced random odd-bit RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject zero random odd-bit count");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1032,6 +1068,7 @@ int main(void)
   failures += test_reject_null_random_odd_bit_rng();
   failures += test_reject_zero_length_random_odd_bits();
   failures += test_reject_overflowing_random_odd_bit_length();
+  failures += test_reject_zero_random_odd_bit_count();
 
   return failures == 0 ? 0 : 1;
 }
