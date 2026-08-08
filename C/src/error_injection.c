@@ -1,5 +1,16 @@
 #include "error_injection.h"
 
+static uint32_t error_injection_rng_next(
+  error_injection_rng_t *rng
+)
+{
+  rng->state =
+    rng->state * UINT32_C(1664525) +
+    UINT32_C(1013904223);
+
+  return rng->state;
+}
+
 bool error_injection_rng_seed(
   error_injection_rng_t *rng,
   uint32_t seed
@@ -12,6 +23,36 @@ bool error_injection_rng_seed(
   rng->state = seed;
 
   return true;
+}
+
+bool error_injection_flip_random_bit(
+  uint8_t *data,
+  size_t length,
+  error_injection_rng_t *rng
+)
+{
+  size_t bit_count;
+  size_t bit_index;
+  uint32_t random_value;
+
+  if (
+    data == NULL ||
+    rng == NULL ||
+    length == 0U ||
+    length > SIZE_MAX / 8U
+  ) {
+    return false;
+  }
+
+  bit_count = length * 8U;
+  random_value = error_injection_rng_next(rng);
+  bit_index = (size_t)random_value % bit_count;
+
+  return error_injection_flip_bit(
+    data,
+    length,
+    bit_index
+  );
 }
 
 bool error_injection_flip_bit(
