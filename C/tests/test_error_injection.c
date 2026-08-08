@@ -1098,6 +1098,45 @@ static int test_reject_excessive_random_odd_bit_count(void)
   return 0;
 }
 
+static int test_reject_overflowing_random_odd_bit_allocation(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint8_t expected = data[0];
+  const uint32_t seed = UINT32_C(0x12345678);
+  const size_t large_length = SIZE_MAX / 8U;
+  const size_t overflowing_bit_count =
+    SIZE_MAX / sizeof(size_t) + 2U;
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: allocation-overflow RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_odd_bits(
+        data,
+        large_length,
+        overflowing_bit_count,
+        &rng
+      )) {
+    fputs("FAIL: overflowing odd-bit allocation was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: allocation overflow modified random odd-bit data\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: allocation overflow advanced odd-bit RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject overflowing random odd-bit allocation");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1143,6 +1182,7 @@ int main(void)
   failures += test_reject_zero_random_odd_bit_count();
   failures += test_reject_even_random_odd_bit_count();
   failures += test_reject_excessive_random_odd_bit_count();
+  failures += test_reject_overflowing_random_odd_bit_allocation();
 
   return failures == 0 ? 0 : 1;
 }
