@@ -555,6 +555,34 @@ static int test_reproduce_random_bit(void)
   return 0;
 }
 
+static int test_reject_null_random_bit_data(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: null-data RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_bit(
+        NULL,
+        1U,
+        &rng
+      )) {
+    fputs("FAIL: null random-bit data was accepted\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: null data advanced RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random-bit data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -583,6 +611,7 @@ int main(void)
   failures += test_seed_rng_state();
   failures += test_reject_null_rng_state();
   failures += test_reproduce_random_bit();
+  failures += test_reject_null_random_bit_data();
 
   return failures == 0 ? 0 : 1;
 }
