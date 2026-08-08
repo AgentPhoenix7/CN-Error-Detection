@@ -19,6 +19,18 @@ typedef struct
 } error_injection_rng_t;
 
 /**
+ * @brief Initializes reproducible pseudo-random generator state.
+ *
+ * @param[out] rng State object to initialize.
+ * @param[in] seed Starting value for the reproducible sequence.
+ * @return `true` when the state was initialized; `false` when `rng` is `NULL`.
+ */
+bool error_injection_rng_seed(
+  error_injection_rng_t *rng,
+  uint32_t seed
+);
+
+/**
  * @brief Flips one specified bit in a byte array.
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
