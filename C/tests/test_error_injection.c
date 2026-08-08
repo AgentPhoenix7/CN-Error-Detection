@@ -1213,6 +1213,35 @@ static int test_reproduce_random_burst(void)
   return 0;
 }
 
+static int test_reject_null_random_burst_data(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: null random burst data RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_burst(
+        NULL,
+        1U,
+        1U,
+        &rng
+      )) {
+    fputs("FAIL: null random burst data was accepted\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: null random burst data advanced RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random burst data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1261,6 +1290,7 @@ int main(void)
   failures += test_reject_overflowing_random_odd_bit_allocation();
   failures += test_reselect_duplicate_random_odd_bits();
   failures += test_reproduce_random_burst();
+  failures += test_reject_null_random_burst_data();
 
   return failures == 0 ? 0 : 1;
 }
