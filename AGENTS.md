@@ -18,17 +18,18 @@ make -C C test              # run all available C checks
 make -C C test_checksum     # run checksum tests
 make -C C test_crc          # run CRC tests
 make -C C test_error_injection # run error-injection tests
+make -C C test_frame        # run frame serialization tests
 make -C C check_crc_header  # validate the CRC interface
 make -C C clean             # remove generated C build output
 ```
 
 ## Coding Style & Naming Conventions
 
-Use C17, two-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations and Doxygen `/** ... */` API documentation; source files contain implementations.
+Use C17, two-space indentation, and braces on a new line for functions. Use `snake_case` for functions and variables, `UPPER_SNAKE_CASE` for macros, and fixed-width integer types for wire data. Prefix public functions with their module, such as `checksum16_compute`. Keep private helpers `static`. Headers contain declarations and Doxygen `/** ... */` API documentation; source files contain implementations. Treat in-memory frame structures as logical representations; serialize wire headers field by field rather than copying C structs directly.
 
 ## Testing Guidelines
 
-Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. For reproducible random-error tests, pin the seed, final RNG state, and mutated bytes. Invalid-input tests for random operations must confirm that neither data nor RNG state changes. Every source change must compile with strict warnings and pass the affected tests before continuing.
+Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. For reproducible random-error tests, pin the seed, final RNG state, and mutated bytes. Invalid-input tests for random operations must confirm that neither data nor RNG state changes. Frame serialization tests must pin wire bytes and network byte order; rejected serialization must leave output unchanged. Every source change must compile with strict warnings and pass the affected tests before continuing.
 
 ## Commit & Pull Request Guidelines
 

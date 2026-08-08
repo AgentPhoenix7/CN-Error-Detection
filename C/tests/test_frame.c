@@ -60,6 +60,36 @@ static int test_serialize_header(void)
   return 0;
 }
 
+static int test_serialize_maximum_payload_length(void)
+{
+  const frame_header_t header = {
+    .source_mac = {UINT8_C(0)},
+    .destination_mac = {UINT8_C(0)},
+    .payload_length = (uint16_t)MAX_PAYLOAD_SIZE,
+    .sequence_number = UINT8_C(0)
+  };
+  uint8_t serialized_header[FRAME_HEADER_SIZE] = {UINT8_C(0)};
+
+  if (!frame_header_serialize(&header, serialized_header)) {
+    fputs("FAIL: maximum payload length was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    serialized_header[12U] != UINT8_C(0x05) ||
+    serialized_header[13U] != UINT8_C(0xDB)
+  ) {
+    fputs(
+      "FAIL: maximum payload length was not encoded in network byte order\n",
+      stderr
+    );
+    return 1;
+  }
+
+  puts("PASS: serialize maximum payload length");
+  return 0;
+}
+
 static int test_reject_null_header(void)
 {
   uint8_t serialized_header[FRAME_HEADER_SIZE];
@@ -148,6 +178,7 @@ int main(void)
   failures += test_reject_null_header();
   failures += test_reject_null_serialized_header();
   failures += test_reject_oversized_payload_length();
+  failures += test_serialize_maximum_payload_length();
 
   return failures == 0 ? 0 : 1;
 }
