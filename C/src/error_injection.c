@@ -1,5 +1,7 @@
 #include "error_injection.h"
 
+#include <stdlib.h>
+
 static uint32_t error_injection_rng_next(
   error_injection_rng_t *rng
 )
@@ -96,6 +98,80 @@ bool error_injection_flip_random_two_bits(
     first_bit_index,
     second_bit_index
   );
+}
+
+bool error_injection_flip_random_odd_bits(
+  uint8_t *data,
+  size_t length,
+  size_t bit_count,
+  error_injection_rng_t *rng
+)
+{
+  size_t total_bit_count;
+  size_t *bit_indices;
+  size_t selected_count;
+  size_t previous_index;
+  size_t candidate;
+  bool result;
+
+  if (
+    data == NULL ||
+    rng == NULL ||
+    length == 0U ||
+    length > SIZE_MAX / 8U ||
+    bit_count == 0U ||
+    bit_count % 2U == 0U
+  ) {
+    return false;
+  }
+
+  total_bit_count = length * 8U;
+
+  if (
+    bit_count > total_bit_count ||
+    bit_count > SIZE_MAX / sizeof *bit_indices
+  ) {
+    return false;
+  }
+
+  bit_indices = malloc(bit_count * sizeof *bit_indices);
+
+  if (bit_indices == NULL) {
+    return false;
+  }
+
+  selected_count = 0U;
+
+  while (selected_count < bit_count) {
+    candidate =
+      (size_t)error_injection_rng_next(rng) % total_bit_count;
+
+    for (
+      previous_index = 0U;
+      previous_index < selected_count;
+      previous_index++
+    ) {
+      if (candidate == bit_indices[previous_index]) {
+        break;
+      }
+    }
+
+    if (previous_index == selected_count) {
+      bit_indices[selected_count] = candidate;
+      selected_count++;
+    }
+  }
+
+  result = error_injection_flip_odd_bits(
+    data,
+    length,
+    bit_indices,
+    bit_count
+  );
+
+  free(bit_indices);
+
+  return result;
 }
 
 bool error_injection_flip_bit(
