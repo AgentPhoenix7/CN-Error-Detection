@@ -174,6 +174,46 @@ bool error_injection_flip_random_odd_bits(
   return result;
 }
 
+bool error_injection_flip_random_burst(
+  uint8_t *data,
+  size_t length,
+  size_t burst_length,
+  error_injection_rng_t *rng
+)
+{
+  size_t total_bit_count;
+  size_t valid_start_count;
+  size_t start_bit_index;
+
+  if (
+    data == NULL ||
+    rng == NULL ||
+    length == 0U ||
+    length > SIZE_MAX / 8U ||
+    burst_length == 0U
+  ) {
+    return false;
+  }
+
+  total_bit_count = length * 8U;
+
+  if (burst_length > total_bit_count) {
+    return false;
+  }
+
+  valid_start_count =
+    total_bit_count - burst_length + 1U;
+  start_bit_index =
+    (size_t)error_injection_rng_next(rng) % valid_start_count;
+
+  return error_injection_flip_burst(
+    data,
+    length,
+    start_bit_index,
+    burst_length
+  );
+}
+
 bool error_injection_flip_bit(
   uint8_t *data,
   size_t length,
