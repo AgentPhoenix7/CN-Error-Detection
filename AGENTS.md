@@ -17,6 +17,7 @@ make -C C all               # build or validate current modules
 make -C C test              # run all available C checks
 make -C C test_checksum     # run checksum tests
 make -C C test_crc          # run CRC tests
+make -C C test_error_injection # run error-injection tests
 make -C C check_crc_header  # validate the CRC interface
 make -C C clean             # remove generated C build output
 ```
@@ -27,11 +28,11 @@ Use C17, two-space indentation, and braces on a new line for functions. Use `sna
 
 ## Testing Guidelines
 
-Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. Every source change must compile with strict warnings and pass the affected tests before continuing.
+Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. For reproducible random-error tests, pin the seed, final RNG state, and mutated bytes. Invalid-input tests for random operations must confirm that neither data nor RNG state changes. Every source change must compile with strict warnings and pass the affected tests before continuing.
 
 ## Commit & Pull Request Guidelines
 
-No commit history exists yet, so no established convention can be inferred. Use short, imperative, scoped messages, for example `feat(c): add checksum verification`. Pull requests should explain the change, identify affected modules, list executed tests, and link relevant issues. Include screenshots only for graphs or report-rendering changes.
+Use short, imperative, scoped messages consistent with the existing history, for example `feat: add random odd-bit validation test`. Pull requests should explain the change, identify affected modules, list executed tests, and link relevant issues. Include screenshots only for graphs or report-rendering changes.
 
 ## Agent-Specific Instructions
 
