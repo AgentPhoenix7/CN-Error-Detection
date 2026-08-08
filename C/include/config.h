@@ -41,7 +41,13 @@
 /** @} */
 
 /**
- * @name Common padded-payload sizes
+ * @name Common transmitted-payload sizes
+ *
+ * `MIN_PAYLOAD_SIZE` is the minimum payload size after zero padding. The actual
+ * unpadded payload length stored in the frame header may be smaller.
+ *
+ * `MAX_PAYLOAD_SIZE` is the maximum actual or padded payload size supported by
+ * every FCS scheme.
  *
  * These boundaries keep every scheme between 64 and 1518 bytes:
  *
