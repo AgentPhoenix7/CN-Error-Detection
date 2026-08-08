@@ -737,6 +737,29 @@ static int test_reject_null_random_two_bit_data(void)
   return 0;
 }
 
+static int test_reject_null_random_two_bit_rng(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_random_two_bits(
+        data,
+        sizeof data,
+        NULL
+      )) {
+    fputs("FAIL: null random two-bit RNG was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: null RNG modified random two-bit data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random two-bit RNG");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -771,6 +794,7 @@ int main(void)
   failures += test_reject_overflowing_random_bit_length();
   failures += test_reproduce_random_two_bits();
   failures += test_reject_null_random_two_bit_data();
+  failures += test_reject_null_random_two_bit_rng();
 
   return failures == 0 ? 0 : 1;
 }
