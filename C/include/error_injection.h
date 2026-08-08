@@ -11,6 +11,14 @@
 #include <stdint.h>
 
 /**
+ * @brief Stores state for reproducible pseudo-random error selection.
+ */
+typedef struct
+{
+  uint32_t state;
+} error_injection_rng_t;
+
+/**
  * @brief Flips one specified bit in a byte array.
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
