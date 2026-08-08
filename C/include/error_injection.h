@@ -48,6 +48,24 @@ bool error_injection_flip_random_bit(
 );
 
 /**
+ * @brief Flips two pseudo-randomly selected nonadjacent bits.
+ *
+ * The selected positions are distinct and differ by more than one. Uses and
+ * advances the supplied generator state. No data or generator state is
+ * modified when the input is invalid.
+ *
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in,out] rng Initialized pseudo-random generator state.
+ * @return `true` when two nonadjacent bits were flipped; otherwise `false`.
+ */
+bool error_injection_flip_random_two_bits(
+  uint8_t *data,
+  size_t length,
+  error_injection_rng_t *rng
+);
+
+/**
  * @brief Flips one specified bit in a byte array.
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
