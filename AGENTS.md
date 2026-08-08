@@ -4,7 +4,7 @@
 
 The repository root contains shared assignment references, including the specification PDFs, `instruction.jpg`, and the main `README.md`. Language implementations belong in separate directories; the active implementation is under `C/`.
 
-Within `C/`, public interfaces live in `include/`, implementations in `src/`, and module tests in `tests/`. Test inputs belong in `test_data/`. Generated experiment data and plots go in `results/`, plotting utilities in `tools/`, and written analysis in `report/`. Keep generated binaries and object files in `C/build/`.
+Within `C/`, public interfaces live in `include/`, implementations in `src/`, and module tests in `tests/`. Test inputs belong in `test_data/`. Generated experiment data and plots go in `results/`, Python experiment and plotting utilities in `tools/`, and written analysis in `report/`. Keep generated binaries and object files in `C/build/`. The Python tools use the uv project declared by `C/pyproject.toml` and `C/uv.lock`; keep the local environment in ignored `C/.venv/`.
 
 Future C++, Python, and Java work must remain in their corresponding top-level directories, with independent build files and `.gitignore` rules.
 
@@ -19,9 +19,18 @@ make -C C test_checksum     # run checksum tests
 make -C C test_crc          # run CRC tests
 make -C C test_error_injection # run error-injection tests
 make -C C test_frame        # run frame serialization tests
+make -C C test_socket_utils # run exact-length socket helper tests
+make -C C test_end_to_end   # transfer a control file with every scheme
 make -C C check_crc_header  # validate the CRC interface
+make -C C generate_test_data # regenerate deterministic fixtures through uv
+make -C C experiments       # run the seeded experiment matrix through uv
+make -C C plots             # regenerate SVG plots from the results CSV
 make -C C clean             # remove generated C build output
 ```
+
+Override experiment defaults with `EXPERIMENT_INPUT=<path>` and
+`EXPERIMENT_REPEATS=<positive-count>`. Run Python scripts through `uv run`
+rather than the system interpreter.
 
 ## Coding Style & Naming Conventions
 
@@ -29,7 +38,7 @@ Use C17, two-space indentation, and braces on a new line for functions. Use `sna
 
 ## Testing Guidelines
 
-Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. For reproducible random-error tests, pin the seed, final RNG state, and mutated bytes. Invalid-input tests for random operations must confirm that neither data nor RNG state changes. Frame serialization tests must pin wire bytes and network byte order; rejected serialization must leave output unchanged. Every source change must compile with strict warnings and pass the affected tests before continuing.
+Use small C test executables with assertions or explicit pass/fail return codes; no external test framework is currently required. Name tests `tests/test_<module>.c`. Cover normal, boundary, malformed, and error-injection cases. For reproducible random-error tests, pin the seed, final RNG state, and mutated bytes. Invalid-input tests for random operations must confirm that neither data nor RNG state changes. Frame serialization tests must pin wire bytes and network byte order; rejected serialization must leave output unchanged. Socket tests must distinguish clean EOF from a truncated record. End-to-end control transfers must compare binary output byte-for-byte for every FCS scheme. Every source change must compile with strict warnings and pass the affected tests before continuing.
 
 ## Commit & Pull Request Guidelines
 
