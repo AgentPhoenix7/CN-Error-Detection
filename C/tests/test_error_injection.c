@@ -709,6 +709,34 @@ static int test_reproduce_random_two_bits(void)
   return 0;
 }
 
+static int test_reject_null_random_two_bit_data(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: null two-bit data RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_two_bits(
+        NULL,
+        1U,
+        &rng
+      )) {
+    fputs("FAIL: null random two-bit data was accepted\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: null two-bit data advanced RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random two-bit data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -742,6 +770,7 @@ int main(void)
   failures += test_reject_zero_length_random_bit();
   failures += test_reject_overflowing_random_bit_length();
   failures += test_reproduce_random_two_bits();
+  failures += test_reject_null_random_two_bit_data();
 
   return failures == 0 ? 0 : 1;
 }
