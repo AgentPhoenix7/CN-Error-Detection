@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 static int test_serialize_header(void)
 {
@@ -59,7 +60,40 @@ static int test_serialize_header(void)
   return 0;
 }
 
+static int test_reject_null_header(void)
+{
+  uint8_t serialized_header[FRAME_HEADER_SIZE];
+  const uint8_t sentinel = UINT8_C(0xA5);
+  size_t index;
+
+  memset(
+    serialized_header,
+    sentinel,
+    sizeof serialized_header
+  );
+
+  if (frame_header_serialize(NULL, serialized_header)) {
+    fputs("FAIL: null frame header was accepted\n", stderr);
+    return 1;
+  }
+
+  for (index = 0U; index < FRAME_HEADER_SIZE; index++) {
+    if (serialized_header[index] != sentinel) {
+      fputs("FAIL: null frame header modified output\n", stderr);
+      return 1;
+    }
+  }
+
+  puts("PASS: reject null frame header");
+  return 0;
+}
+
 int main(void)
 {
-  return test_serialize_header();
+  int failures = 0;
+
+  failures += test_serialize_header();
+  failures += test_reject_null_header();
+
+  return failures == 0 ? 0 : 1;
 }
