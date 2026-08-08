@@ -583,6 +583,29 @@ static int test_reject_null_random_bit_data(void)
   return 0;
 }
 
+static int test_reject_null_random_bit_rng(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_random_bit(
+        data,
+        sizeof data,
+        NULL
+      )) {
+    fputs("FAIL: null random-bit RNG was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: null RNG modified random-bit data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random-bit RNG");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -612,6 +635,7 @@ int main(void)
   failures += test_reject_null_rng_state();
   failures += test_reproduce_random_bit();
   failures += test_reject_null_random_bit_data();
+  failures += test_reject_null_random_bit_rng();
 
   return failures == 0 ? 0 : 1;
 }
