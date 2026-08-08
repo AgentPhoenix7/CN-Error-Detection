@@ -8,6 +8,7 @@
 
 #include "config.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /**
@@ -23,5 +24,21 @@ typedef struct
   uint16_t payload_length;
   uint8_t sequence_number;
 } frame_header_t;
+
+/**
+ * @brief Serializes a logical header into its fixed-size wire representation.
+ *
+ * Fields are written in header order, and `payload_length` is converted from
+ * host byte order to network byte order. No output is modified when either
+ * pointer is `NULL` or `payload_length` exceeds `MAX_PAYLOAD_SIZE`.
+ *
+ * @param[in] header Logical header fields to serialize.
+ * @param[out] serialized_header Buffer of `FRAME_HEADER_SIZE` bytes.
+ * @return `true` when the header was serialized; otherwise `false`.
+ */
+bool frame_header_serialize(
+  const frame_header_t *header,
+  uint8_t serialized_header[FRAME_HEADER_SIZE]
+);
 
 #endif
