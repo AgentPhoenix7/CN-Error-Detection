@@ -1266,6 +1266,42 @@ static int test_reject_null_random_burst_rng(void)
   return 0;
 }
 
+static int test_reject_zero_length_random_burst(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: zero-length random burst RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (error_injection_flip_random_burst(
+        data,
+        0U,
+        1U,
+        &rng
+      )) {
+    fputs("FAIL: zero-length random burst was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: zero-length random burst modified data\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: zero-length random burst advanced RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject zero-length random burst");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1316,6 +1352,7 @@ int main(void)
   failures += test_reproduce_random_burst();
   failures += test_reject_null_random_burst_data();
   failures += test_reject_null_random_burst_rng();
+  failures += test_reject_zero_length_random_burst();
 
   return failures == 0 ? 0 : 1;
 }
