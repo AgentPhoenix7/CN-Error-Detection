@@ -331,6 +331,24 @@ static int test_reject_zero_odd_bit_count(void)
   return 0;
 }
 
+static int test_reject_null_odd_bit_data(void)
+{
+  const size_t bit_indices[] = {0U, 1U, 2U};
+
+  if (error_injection_flip_odd_bits(
+        NULL,
+        0U,
+        bit_indices,
+        sizeof bit_indices / sizeof bit_indices[0]
+      )) {
+    fputs("FAIL: null odd-bit data was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null odd-bit data");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -349,6 +367,7 @@ int main(void)
   failures += test_reject_duplicate_odd_bit_indices();
   failures += test_reject_null_odd_bit_indices();
   failures += test_reject_zero_odd_bit_count();
+  failures += test_reject_null_odd_bit_data();
 
   return failures == 0 ? 0 : 1;
 }
