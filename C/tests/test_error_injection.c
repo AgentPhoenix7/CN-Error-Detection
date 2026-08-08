@@ -402,6 +402,30 @@ static int test_reject_zero_length_burst(void)
   return 0;
 }
 
+static int test_reject_out_of_range_burst_start(void)
+{
+  uint8_t data[] = {UINT8_C(0xA5)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_burst(
+        data,
+        sizeof data,
+        8U,
+        1U
+      )) {
+    fputs("FAIL: out-of-range burst start was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: out-of-range burst start modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject out-of-range burst start");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -423,6 +447,7 @@ int main(void)
   failures += test_reject_null_odd_bit_data();
   failures += test_flip_burst_across_byte_boundary();
   failures += test_reject_zero_length_burst();
+  failures += test_reject_out_of_range_burst_start();
 
   return failures == 0 ? 0 : 1;
 }
