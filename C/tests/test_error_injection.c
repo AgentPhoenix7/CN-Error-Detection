@@ -1137,6 +1137,45 @@ static int test_reject_overflowing_random_odd_bit_allocation(void)
   return 0;
 }
 
+static int test_reselect_duplicate_random_odd_bits(void)
+{
+  uint8_t data[] = {
+    UINT8_C(0x00),
+    UINT8_C(0x00),
+    UINT8_C(0x00)
+  };
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: duplicate-selection RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (!error_injection_flip_random_odd_bits(
+        data,
+        sizeof data,
+        13U,
+        &rng
+      )) {
+    fputs("FAIL: duplicate random positions were not reselected\n", stderr);
+    return 1;
+  }
+
+  if (
+    rng.state != UINT32_C(0x6EDA88C8) ||
+    data[0] != UINT8_C(0xE3) ||
+    data[1] != UINT8_C(0x4D) ||
+    data[2] != UINT8_C(0xB8)
+  ) {
+    fputs("FAIL: duplicate odd-bit reselection was not reproducible\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reselect duplicate random odd-bit positions");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1183,6 +1222,7 @@ int main(void)
   failures += test_reject_even_random_odd_bit_count();
   failures += test_reject_excessive_random_odd_bit_count();
   failures += test_reject_overflowing_random_odd_bit_allocation();
+  failures += test_reselect_duplicate_random_odd_bits();
 
   return failures == 0 ? 0 : 1;
 }
