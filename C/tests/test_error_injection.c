@@ -378,6 +378,30 @@ static int test_flip_burst_across_byte_boundary(void)
   return 0;
 }
 
+static int test_reject_zero_length_burst(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_burst(
+        data,
+        sizeof data,
+        3U,
+        0U
+      )) {
+    fputs("FAIL: zero-length burst was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: zero-length burst modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject zero-length burst");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -398,6 +422,7 @@ int main(void)
   failures += test_reject_zero_odd_bit_count();
   failures += test_reject_null_odd_bit_data();
   failures += test_flip_burst_across_byte_boundary();
+  failures += test_reject_zero_length_burst();
 
   return failures == 0 ? 0 : 1;
 }
