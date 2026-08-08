@@ -466,6 +466,30 @@ static int test_reject_null_burst_data(void)
   return 0;
 }
 
+static int test_reject_overflowing_burst_range(void)
+{
+  uint8_t data[] = {UINT8_C(0xA5)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_burst(
+        data,
+        sizeof data,
+        7U,
+        SIZE_MAX
+  )) {
+    fputs("FAIL: overflowing burst range was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: overflowing burst range modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject overflowing burst range");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -490,6 +514,7 @@ int main(void)
   failures += test_reject_out_of_range_burst_start();
   failures += test_reject_overrunning_burst();
   failures += test_reject_null_burst_data();
+  failures += test_reject_overflowing_burst_range();
 
   return failures == 0 ? 0 : 1;
 }
