@@ -1242,6 +1242,30 @@ static int test_reject_null_random_burst_data(void)
   return 0;
 }
 
+static int test_reject_null_random_burst_rng(void)
+{
+  uint8_t data[] = {UINT8_C(0x5A)};
+  const uint8_t expected = data[0];
+
+  if (error_injection_flip_random_burst(
+        data,
+        sizeof data,
+        3U,
+        NULL
+      )) {
+    fputs("FAIL: null random burst RNG was accepted\n", stderr);
+    return 1;
+  }
+
+  if (data[0] != expected) {
+    fputs("FAIL: null random burst RNG modified data\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null random burst RNG");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1291,6 +1315,7 @@ int main(void)
   failures += test_reselect_duplicate_random_odd_bits();
   failures += test_reproduce_random_burst();
   failures += test_reject_null_random_burst_data();
+  failures += test_reject_null_random_burst_rng();
 
   return failures == 0 ? 0 : 1;
 }
