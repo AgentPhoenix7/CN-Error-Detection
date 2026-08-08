@@ -106,6 +106,40 @@ static int test_reject_null_serialized_header(void)
   return 0;
 }
 
+static int test_reject_oversized_payload_length(void)
+{
+  const frame_header_t header = {
+    .source_mac = {UINT8_C(0)},
+    .destination_mac = {UINT8_C(0)},
+    .payload_length = (uint16_t)(MAX_PAYLOAD_SIZE + 1U),
+    .sequence_number = UINT8_C(0)
+  };
+  uint8_t serialized_header[FRAME_HEADER_SIZE];
+  const uint8_t sentinel = UINT8_C(0xA5);
+  size_t index;
+
+  memset(
+    serialized_header,
+    sentinel,
+    sizeof serialized_header
+  );
+
+  if (frame_header_serialize(&header, serialized_header)) {
+    fputs("FAIL: oversized payload length was accepted\n", stderr);
+    return 1;
+  }
+
+  for (index = 0U; index < FRAME_HEADER_SIZE; index++) {
+    if (serialized_header[index] != sentinel) {
+      fputs("FAIL: oversized payload length modified output\n", stderr);
+      return 1;
+    }
+  }
+
+  puts("PASS: reject oversized payload length");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -113,6 +147,7 @@ int main(void)
   failures += test_serialize_header();
   failures += test_reject_null_header();
   failures += test_reject_null_serialized_header();
+  failures += test_reject_oversized_payload_length();
 
   return failures == 0 ? 0 : 1;
 }
