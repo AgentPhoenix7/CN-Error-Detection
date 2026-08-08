@@ -490,6 +490,25 @@ static int test_reject_overflowing_burst_range(void)
   return 0;
 }
 
+static int test_seed_rng_state(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: valid RNG seed was rejected\n", stderr);
+    return 1;
+  }
+
+  if (rng.state != seed) {
+    fputs("FAIL: RNG state does not match seed\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: seed RNG state");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -515,6 +534,7 @@ int main(void)
   failures += test_reject_overrunning_burst();
   failures += test_reject_null_burst_data();
   failures += test_reject_overflowing_burst_range();
+  failures += test_seed_rng_state();
 
   return failures == 0 ? 0 : 1;
 }
