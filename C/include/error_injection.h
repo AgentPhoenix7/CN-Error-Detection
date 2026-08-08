@@ -66,6 +66,26 @@ bool error_injection_flip_random_two_bits(
 );
 
 /**
+ * @brief Flips a requested odd number of pseudo-randomly selected distinct bits.
+ *
+ * `bit_count` must be positive, odd, and no greater than the number of bits in
+ * `data`. Uses and advances the supplied generator state. No data or generator
+ * state is modified when the input is invalid.
+ *
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] bit_count Positive odd number of distinct bits to select.
+ * @param[in,out] rng Initialized pseudo-random generator state.
+ * @return `true` when every selected bit was flipped; otherwise `false`.
+ */
+bool error_injection_flip_random_odd_bits(
+  uint8_t *data,
+  size_t length,
+  size_t bit_count,
+  error_injection_rng_t *rng
+);
+
+/**
  * @brief Flips one specified bit in a byte array.
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
