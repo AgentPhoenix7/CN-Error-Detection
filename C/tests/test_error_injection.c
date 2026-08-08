@@ -831,6 +831,39 @@ static int test_reject_overflowing_random_two_bit_length(void)
   return 0;
 }
 
+static int test_reproduce_random_odd_bits(void)
+{
+  uint8_t data[] = {UINT8_C(0x00)};
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: random odd-bit RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (!error_injection_flip_random_odd_bits(
+        data,
+        sizeof data,
+        3U,
+        &rng
+      )) {
+    fputs("FAIL: random odd-bit pattern was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    rng.state != UINT32_C(0x25DBFAC1) ||
+    data[0] != UINT8_C(0x61)
+  ) {
+    fputs("FAIL: random odd-bit result was not reproducible\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reproduce random odd-bit pattern");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -868,6 +901,7 @@ int main(void)
   failures += test_reject_null_random_two_bit_rng();
   failures += test_reject_zero_length_random_two_bits();
   failures += test_reject_overflowing_random_two_bit_length();
+  failures += test_reproduce_random_odd_bits();
 
   return failures == 0 ? 0 : 1;
 }
