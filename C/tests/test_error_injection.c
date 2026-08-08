@@ -523,6 +523,38 @@ static int test_reject_null_rng_state(void)
   return 0;
 }
 
+static int test_reproduce_random_bit(void)
+{
+  uint8_t data[] = {UINT8_C(0x00)};
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: random-bit RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (!error_injection_flip_random_bit(
+        data,
+        sizeof data,
+        &rng
+      )) {
+    fputs("FAIL: random bit was not flipped\n", stderr);
+    return 1;
+  }
+
+  if (
+    rng.state != UINT32_C(0x75432777) ||
+    data[0] != UINT8_C(0x01)
+  ) {
+    fputs("FAIL: random-bit result was not reproducible\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reproduce random bit");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -550,6 +582,7 @@ int main(void)
   failures += test_reject_overflowing_burst_range();
   failures += test_seed_rng_state();
   failures += test_reject_null_rng_state();
+  failures += test_reproduce_random_bit();
 
   return failures == 0 ? 0 : 1;
 }
