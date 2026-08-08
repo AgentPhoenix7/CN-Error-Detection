@@ -677,6 +677,38 @@ static int test_reject_overflowing_random_bit_length(void)
   return 0;
 }
 
+static int test_reproduce_random_two_bits(void)
+{
+  uint8_t data[] = {UINT8_C(0x00)};
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: random two-bit RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (!error_injection_flip_random_two_bits(
+        data,
+        sizeof data,
+        &rng
+      )) {
+    fputs("FAIL: random two-bit pattern was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    rng.state != UINT32_C(0xCD305E6A) ||
+    data[0] != UINT8_C(0x21)
+  ) {
+    fputs("FAIL: random two-bit result was not reproducible\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reproduce random two-bit pattern");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -709,6 +741,7 @@ int main(void)
   failures += test_reject_null_random_bit_rng();
   failures += test_reject_zero_length_random_bit();
   failures += test_reject_overflowing_random_bit_length();
+  failures += test_reproduce_random_two_bits();
 
   return failures == 0 ? 0 : 1;
 }
