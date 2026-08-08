@@ -88,12 +88,31 @@ static int test_reject_null_header(void)
   return 0;
 }
 
+static int test_reject_null_serialized_header(void)
+{
+  const frame_header_t header = {
+    .source_mac = {UINT8_C(0)},
+    .destination_mac = {UINT8_C(0)},
+    .payload_length = UINT16_C(1),
+    .sequence_number = UINT8_C(0)
+  };
+
+  if (frame_header_serialize(&header, NULL)) {
+    fputs("FAIL: null serialized header was accepted\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject null serialized header");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
 
   failures += test_serialize_header();
   failures += test_reject_null_header();
+  failures += test_reject_null_serialized_header();
 
   return failures == 0 ? 0 : 1;
 }
