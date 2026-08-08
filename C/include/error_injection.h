@@ -86,6 +86,26 @@ bool error_injection_flip_random_odd_bits(
 );
 
 /**
+ * @brief Flips a pseudo-randomly positioned contiguous burst.
+ *
+ * `burst_length` must be positive and no greater than the number of bits in
+ * `data`. Selects one valid start position and advances the supplied generator
+ * state. No data or generator state is modified when the input is invalid.
+ *
+ * @param[in,out] data Bytes to modify.
+ * @param[in] length Number of bytes in `data`.
+ * @param[in] burst_length Positive number of consecutive bits to flip.
+ * @param[in,out] rng Initialized pseudo-random generator state.
+ * @return `true` when the complete burst was applied; otherwise `false`.
+ */
+bool error_injection_flip_random_burst(
+  uint8_t *data,
+  size_t length,
+  size_t burst_length,
+  error_injection_rng_t *rng
+);
+
+/**
  * @brief Flips one specified bit in a byte array.
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
