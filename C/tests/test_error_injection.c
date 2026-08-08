@@ -349,6 +349,35 @@ static int test_reject_null_odd_bit_data(void)
   return 0;
 }
 
+static int test_flip_burst_across_byte_boundary(void)
+{
+  uint8_t data[] = {
+    UINT8_C(0x00),
+    UINT8_C(0x00)
+  };
+
+  if (!error_injection_flip_burst(
+        data,
+        sizeof data,
+        6U,
+        5U
+      )) {
+    fputs("FAIL: valid burst was accepted\n", stderr);
+    return 1;
+  }
+
+  if (
+    data[0] != UINT8_C(0x03) ||
+    data[1] != UINT8_C(0xE0)
+  ) {
+    fputs("FAIL: incorrect burst modification\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: flip burst across byte boundary");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -368,6 +397,7 @@ int main(void)
   failures += test_reject_null_odd_bit_indices();
   failures += test_reject_zero_odd_bit_count();
   failures += test_reject_null_odd_bit_data();
+  failures += test_flip_burst_across_byte_boundary();
 
   return failures == 0 ? 0 : 1;
 }
