@@ -1176,6 +1176,43 @@ static int test_reselect_duplicate_random_odd_bits(void)
   return 0;
 }
 
+static int test_reproduce_random_burst(void)
+{
+  uint8_t data[] = {
+    UINT8_C(0x00),
+    UINT8_C(0x00)
+  };
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: random burst RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (!error_injection_flip_random_burst(
+        data,
+        sizeof data,
+        7U,
+        &rng
+      )) {
+    fputs("FAIL: random burst was rejected\n", stderr);
+    return 1;
+  }
+
+  if (
+    rng.state != UINT32_C(0x75432777) ||
+    data[0] != UINT8_C(0x01) ||
+    data[1] != UINT8_C(0xFC)
+  ) {
+    fputs("FAIL: random burst result was not reproducible\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reproduce random burst");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1223,6 +1260,7 @@ int main(void)
   failures += test_reject_excessive_random_odd_bit_count();
   failures += test_reject_overflowing_random_odd_bit_allocation();
   failures += test_reselect_duplicate_random_odd_bits();
+  failures += test_reproduce_random_burst();
 
   return failures == 0 ? 0 : 1;
 }
