@@ -21,7 +21,10 @@
  * @note If `length` is odd, the final byte becomes the high byte of the
  *       last 16-bit word and zero is used as its low byte.
  */
-uint16_t checksum16_compute(const uint8_t *data, size_t length);
+uint16_t checksum16_compute(
+  const uint8_t *data,
+  size_t length
+);
 
 /**
  * @brief Verifies data against a received 16-bit checksum.
