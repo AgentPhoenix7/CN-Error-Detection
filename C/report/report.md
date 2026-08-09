@@ -25,10 +25,11 @@ The fixed 15-byte header is serialized field-by-field:
 | Actual payload length | 2 | Unsigned, network byte order |
 | Sequence number | 1 | Unsigned byte |
 
-The actual payload is zero-padded to at least 48 bytes. The maximum common
-payload is 1499 bytes, leaving room for the largest four-byte FCS within the
-1518-byte frame maximum. The FCS covers the serialized header and complete
-padded payload, but not the FCS field itself.
+Payload padding and maximum chunk size depend on the selected FCS. CRC-8 uses
+48--1502 transmitted payload bytes; the two-byte schemes use 47--1501 bytes;
+and CRC-32 uses 45--1499 bytes. These limits keep every complete frame within
+64--1518 bytes. The FCS covers the serialized header and complete padded
+payload, but not the FCS field itself.
 
 CRC-10 uses a two-byte network-order FCS. Its ten remainder bits are
 left-aligned and its low six bits are zero. The receiver rejects nonzero

@@ -31,9 +31,10 @@ selected FCS:
 | Actual payload length, network byte order | 2 bytes |
 | Sequence number | 1 byte |
 
-The FCS protects the complete serialized header and padded payload. Actual
-payload length is at most 1499 bytes; transmitted payload is padded to at least
-48 bytes. This keeps complete simulated frames within 64--1518 bytes.
+The FCS protects the complete serialized header and padded payload. Payload
+limits depend on the selected FCS size: the absolute transmitted range is
+45--1502 bytes, while each scheme pads and chunks data so the complete
+simulated frame remains within 64--1518 bytes.
 
 TCP is a byte stream, so each simulated frame is preceded by a two-byte
 network-order record length. That prefix is transport metadata and is not part

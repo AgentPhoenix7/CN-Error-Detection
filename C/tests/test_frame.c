@@ -79,7 +79,7 @@ static int test_serialize_maximum_payload_length(void)
 
   if (
     serialized_header[12U] != UINT8_C(0x05) ||
-    serialized_header[13U] != UINT8_C(0xDB)
+    serialized_header[13U] != UINT8_C(0xDE)
   ) {
     fputs(
       "FAIL: maximum payload length was not encoded in network byte order\n",
@@ -179,7 +179,7 @@ static int test_parse_frame_header(void)
     UINT8_C(0x33), UINT8_C(0x44), UINT8_C(0x55),
     UINT8_C(0xAA), UINT8_C(0xBB), UINT8_C(0xCC),
     UINT8_C(0xDD), UINT8_C(0xEE), UINT8_C(0xFF),
-    UINT8_C(0x05), UINT8_C(0xDB), UINT8_C(0x7E)
+    UINT8_C(0x05), UINT8_C(0xDE), UINT8_C(0x7E)
   };
   frame_header_t header;
 
@@ -215,7 +215,7 @@ static int test_reject_invalid_parsed_header_atomically(void)
   memset(&header, UINT8_C(0xA5), sizeof header);
   original = header;
   serialized_header[12U] = UINT8_C(0x05);
-  serialized_header[13U] = UINT8_C(0xDC);
+  serialized_header[13U] = UINT8_C(0xDF);
 
   if (frame_header_parse(serialized_header, &header)) {
     fputs("FAIL: oversized parsed payload length was accepted\n", stderr);
@@ -247,32 +247,58 @@ static int test_frame_size_calculations(void)
     CRC16_SIZE,
     CRC32_SIZE
   };
+  static const uint16_t expected_minimum_payload_sizes[] = {
+    UINT16_C(47), UINT16_C(48), UINT16_C(47), UINT16_C(47), UINT16_C(45)
+  };
+  static const uint16_t expected_maximum_payload_sizes[] = {
+    UINT16_C(1501), UINT16_C(1502), UINT16_C(1501),
+    UINT16_C(1501), UINT16_C(1499)
+  };
   size_t padded_length;
   size_t fcs_size;
   size_t frame_size;
   size_t index;
 
-  if (
-    !frame_padded_payload_length(UINT16_C(0), &padded_length) ||
-    padded_length != MIN_PAYLOAD_SIZE ||
-    !frame_padded_payload_length(
-      (uint16_t)MAX_PAYLOAD_SIZE,
-      &padded_length
-    ) ||
-    padded_length != MAX_PAYLOAD_SIZE
-  ) {
-    fputs("FAIL: padded payload size calculation is incorrect\n", stderr);
-    return 1;
-  }
-
   for (index = 0U; index < sizeof schemes / sizeof schemes[0]; index++) {
     if (
       !frame_fcs_size(schemes[index], &fcs_size) ||
       fcs_size != expected_fcs_sizes[index] ||
-      !frame_wire_size(UINT16_C(1), schemes[index], &frame_size) ||
-      frame_size != FRAME_HEADER_SIZE + MIN_PAYLOAD_SIZE + fcs_size
+      !frame_padded_payload_length(
+        UINT16_C(0),
+        schemes[index],
+        &padded_length
+      ) ||
+      padded_length != expected_minimum_payload_sizes[index] ||
+      !frame_wire_size(UINT16_C(0), schemes[index], &frame_size) ||
+      frame_size != MIN_FRAME_SIZE ||
+      !frame_padded_payload_length(
+        expected_maximum_payload_sizes[index],
+        schemes[index],
+        &padded_length
+      ) ||
+      padded_length != expected_maximum_payload_sizes[index] ||
+      !frame_wire_size(
+        expected_maximum_payload_sizes[index],
+        schemes[index],
+        &frame_size
+      ) ||
+      frame_size != MAX_FRAME_SIZE
     ) {
       fputs("FAIL: FCS or frame size calculation is incorrect\n", stderr);
+      return 1;
+    }
+
+    padded_length = 123U;
+
+    if (
+      frame_padded_payload_length(
+        (uint16_t)(expected_maximum_payload_sizes[index] + 1U),
+        schemes[index],
+        &padded_length
+      ) ||
+      padded_length != 123U
+    ) {
+      fputs("FAIL: scheme-specific payload maximum was not enforced\n", stderr);
       return 1;
     }
   }
@@ -288,6 +314,7 @@ static int test_reject_invalid_frame_size_inputs(void)
   if (
     frame_padded_payload_length(
       (uint16_t)(MAX_PAYLOAD_SIZE + 1U),
+      FRAME_FCS_CRC8,
       &output
     ) ||
     output != 123U ||
@@ -320,9 +347,9 @@ static int test_serialize_fcs_wire_formats(void)
   static const uint8_t expected_fcs[][MAX_FCS_SIZE] = {
     {UINT8_C(0xCA), UINT8_C(0x94), UINT8_C(0), UINT8_C(0)},
     {UINT8_C(0x7E), UINT8_C(0), UINT8_C(0), UINT8_C(0)},
-    {UINT8_C(0xB6), UINT8_C(0x40), UINT8_C(0), UINT8_C(0)},
-    {UINT8_C(0x23), UINT8_C(0xFE), UINT8_C(0), UINT8_C(0)},
-    {UINT8_C(0x10), UINT8_C(0xB3), UINT8_C(0x27), UINT8_C(0x8F)}
+    {UINT8_C(0xA1), UINT8_C(0x40), UINT8_C(0), UINT8_C(0)},
+    {UINT8_C(0x55), UINT8_C(0x22), UINT8_C(0), UINT8_C(0)},
+    {UINT8_C(0x81), UINT8_C(0x9A), UINT8_C(0xD1), UINT8_C(0x50)}
   };
   const frame_header_t header = {
     .source_mac = {UINT8_C(0)},
@@ -336,13 +363,16 @@ static int test_serialize_fcs_wire_formats(void)
   uint8_t serialized_frame[MAX_FRAME_SIZE];
   size_t serialized_length;
   size_t fcs_size;
-  size_t fcs_offset;
+  size_t padded_length;
   size_t index;
-
-  fcs_offset = FRAME_HEADER_SIZE + MIN_PAYLOAD_SIZE;
 
   for (index = 0U; index < sizeof schemes / sizeof schemes[0]; index++) {
     if (
+      !frame_padded_payload_length(
+        header.payload_length,
+        schemes[index],
+        &padded_length
+      ) ||
       !frame_serialize(
         &header,
         payload,
@@ -352,9 +382,9 @@ static int test_serialize_fcs_wire_formats(void)
         &serialized_length
       ) ||
       !frame_fcs_size(schemes[index], &fcs_size) ||
-      serialized_length != fcs_offset + fcs_size ||
+      serialized_length != MIN_FRAME_SIZE ||
       memcmp(
-        serialized_frame + fcs_offset,
+        serialized_frame + FRAME_HEADER_SIZE + padded_length,
         expected_fcs[index],
         fcs_size
       ) != 0
@@ -654,20 +684,30 @@ static int test_reject_nonzero_payload_padding(void)
   frame_header_t parsed_header;
   size_t serialized_length;
   size_t output_length;
-  size_t protected_length = FRAME_HEADER_SIZE + MIN_PAYLOAD_SIZE;
+  size_t padded_length;
+  size_t protected_length;
   uint16_t checksum;
 
-  if (!frame_serialize(
-    &header,
-    &input,
-    FRAME_FCS_CHECKSUM16,
-    serialized_frame,
-    sizeof serialized_frame,
-    &serialized_length
-  )) {
+  if (
+    !frame_padded_payload_length(
+      header.payload_length,
+      FRAME_FCS_CHECKSUM16,
+      &padded_length
+    ) ||
+    !frame_serialize(
+      &header,
+      &input,
+      FRAME_FCS_CHECKSUM16,
+      serialized_frame,
+      sizeof serialized_frame,
+      &serialized_length
+    )
+  ) {
     fputs("FAIL: padding test setup failed\n", stderr);
     return 1;
   }
+
+  protected_length = FRAME_HEADER_SIZE + padded_length;
 
   serialized_frame[FRAME_HEADER_SIZE + 1U] = UINT8_C(0x01);
   checksum = checksum16_compute(serialized_frame, protected_length);

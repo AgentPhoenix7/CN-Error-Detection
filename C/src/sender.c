@@ -194,6 +194,8 @@ int main(int argc, char *argv[])
   uint8_t payload[MAX_PAYLOAD_SIZE];
   uint8_t serialized_frame[MAX_FRAME_SIZE];
   uint8_t sequence_number = UINT8_C(0);
+  size_t fcs_size;
+  size_t payload_capacity;
   size_t payload_length;
   size_t serialized_length;
   size_t frame_count = 0U;
@@ -220,6 +222,13 @@ int main(int argc, char *argv[])
     host = argv[4];
   }
 
+  if (!frame_fcs_size(scheme, &fcs_size)) {
+    fputs("sender: invalid FCS scheme\n", stderr);
+    return EXIT_FAILURE;
+  }
+
+  payload_capacity = MAX_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
+
   input = fopen(argv[1], "rb");
 
   if (input == NULL) {
@@ -241,7 +250,7 @@ int main(int argc, char *argv[])
   while ((payload_length = fread(
     payload,
     1U,
-    sizeof payload,
+    payload_capacity,
     input
   )) > 0U) {
     header.payload_length = (uint16_t)payload_length;

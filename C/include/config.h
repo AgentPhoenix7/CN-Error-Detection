@@ -41,25 +41,25 @@
 /** @} */
 
 /**
- * @name Common transmitted-payload sizes
+ * @name Absolute transmitted-payload limits
  *
- * `MIN_PAYLOAD_SIZE` is the minimum payload size after zero padding. The actual
- * unpadded payload length stored in the frame header may be smaller.
+ * `MIN_PAYLOAD_SIZE` is the smallest scheme-specific payload after padding.
+ * The actual unpadded payload length stored in the frame header may be smaller.
  *
- * `MAX_PAYLOAD_SIZE` is the maximum actual or padded payload size supported by
- * every FCS scheme.
+ * `MAX_PAYLOAD_SIZE` is the largest scheme-specific actual or padded payload.
  *
- * These boundaries keep every scheme between 64 and 1518 bytes:
+ * These boundaries account for the largest FCS at the minimum frame size and
+ * the smallest FCS at the maximum frame size:
  *
- * Minimum: 64 - 15 - 1 = 48 bytes
- * Maximum: 1518 - 15 - 4 = 1499 bytes
+ * Minimum: 64 - 15 - 4 = 45 bytes
+ * Maximum: 1518 - 15 - 1 = 1502 bytes
  *
  * @{
  */
 #define MIN_PAYLOAD_SIZE \
-  (MIN_FRAME_SIZE - FRAME_HEADER_SIZE - MIN_FCS_SIZE)
+  (MIN_FRAME_SIZE - FRAME_HEADER_SIZE - MAX_FCS_SIZE)
 #define MAX_PAYLOAD_SIZE \
-  (MAX_FRAME_SIZE - FRAME_HEADER_SIZE - MAX_FCS_SIZE)
+  (MAX_FRAME_SIZE - FRAME_HEADER_SIZE - MIN_FCS_SIZE)
 /** @} */
 
 /**
@@ -78,15 +78,15 @@ _Static_assert(
   "The simulated frame header must be 15 bytes"
 );
 _Static_assert(
-  MIN_PAYLOAD_SIZE >= 46U,
-  "The payload must meet the Ethernet minimum"
+  MIN_PAYLOAD_SIZE > 0U,
+  "The minimum payload size must be positive"
 );
 _Static_assert(
-  FRAME_HEADER_SIZE + MIN_PAYLOAD_SIZE + MIN_FCS_SIZE == MIN_FRAME_SIZE,
+  FRAME_HEADER_SIZE + MIN_PAYLOAD_SIZE + MAX_FCS_SIZE == MIN_FRAME_SIZE,
   "Minimum frame-size calculation is incorrect"
 );
 _Static_assert(
-  FRAME_HEADER_SIZE + MAX_PAYLOAD_SIZE + MAX_FCS_SIZE == MAX_FRAME_SIZE,
+  FRAME_HEADER_SIZE + MAX_PAYLOAD_SIZE + MIN_FCS_SIZE == MAX_FRAME_SIZE,
   "Maximum frame-size calculation is incorrect"
 );
 

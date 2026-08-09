@@ -107,11 +107,14 @@ bool frame_fcs_size(
  * @brief Calculates the transmitted payload size after zero padding.
  *
  * @param[in] payload_length Actual unpadded payload length.
+ * @param[in] scheme Error-detection scheme.
  * @param[out] padded_length Transmitted payload length.
- * @return `true` when `payload_length` is valid; otherwise `false`.
+ * @return `true` when the payload and scheme produce a valid frame size;
+ *         otherwise `false`.
  */
 bool frame_padded_payload_length(
   uint16_t payload_length,
+  frame_fcs_scheme_t scheme,
   size_t *padded_length
 );
 

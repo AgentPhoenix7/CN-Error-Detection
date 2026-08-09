@@ -47,8 +47,8 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - The two-byte payload-length field stores the actual unpadded payload length
   in network byte order; it does not store complete frame length.
 - Zero padding is transmitted but excluded from the payload-length field. The
-  receiver derives transmitted payload size as
-  `max(actual_payload_length, MIN_PAYLOAD_SIZE)`.
+  receiver derives the minimum transmitted payload from the selected FCS size
+  so every complete frame is at least 64 bytes.
 - The FCS protects the serialized 15-byte header and complete padded payload;
   the FCS field itself is excluded from its calculation.
 - Sender and receiver agree on the active checksum or CRC scheme at startup;
@@ -58,7 +58,8 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   of the simulated frame or FCS, and is not corrupted by error injection. A
   zero record length terminates the transfer.
 - Complete simulated frame range: 64–1518 bytes.
-- Common padded payload range: 48–1499 bytes.
+- Absolute padded payload range: 45–1502 bytes. CRC-8 uses 48–1502 bytes;
+  the two-byte schemes use 47–1501 bytes; CRC-32 uses 45–1499 bytes.
 - FCS sizes: checksum 2, CRC-8 1, CRC-10 2, CRC-16 2, CRC-32 4 bytes.
 - Final incomplete data is zero-padded. Its header preserves the true payload
   length so binary files that legitimately end in zero bytes remain unambiguous.
@@ -160,8 +161,10 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   `MAX_PAYLOAD_SIZE` before modifying output.
 - `frame_header_parse()` validates and decodes the wire header without changing
   output on failure.
-- Helpers calculate FCS, padded-payload, and complete frame sizes for every
-  scheme.
+- Helpers calculate and enforce FCS-specific padded-payload limits and complete
+  frame sizes for every scheme.
+- The sender selects its read chunk size from the active FCS so maximum-sized
+  serialized frames remain within `MAX_FRAME_SIZE`.
 - `frame_serialize()` zero-pads the payload and writes checksum, CRC-8, CRC-10,
   CRC-16, or CRC-32 in the agreed network representation.
 - `frame_verify_and_extract()` rejects malformed sizes, nonzero payload

@@ -1,7 +1,6 @@
 # Local agent and editor metadata
 .agents/
 .codex/
-.vscode/
 .idea/
 
 # Operating-system metadata

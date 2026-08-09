@@ -1,0 +1,64 @@
+{
+  "editor.fontFamily": "'MesloLGS Nerd Font', Consolas, 'Courier New', monospace",
+  "files.autoSave": "afterDelay",
+  "editor.wordWrap": "on",
+  "C_Cpp.doxygen.generatedStyle": "/**",
+  "[c]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  },
+  "[makefile]": {
+    "editor.insertSpaces": false
+  },
+  "makefile.makeDirectory": "${workspaceFolder}/C",
+  "makefile.launchConfigurations": [
+    {
+      "cwd": "${workspaceFolder}/C/build",
+      "binaryPath": "${workspaceFolder}/C/build/test_checksum",
+      "binaryArgs": []
+    },
+    {
+      "cwd": "${workspaceFolder}/C/build",
+      "binaryPath": "${workspaceFolder}/C/build/test_crc",
+      "binaryArgs": []
+    },
+    {
+      "cwd": "${workspaceFolder}/C/build",
+      "binaryPath": "${workspaceFolder}/C/build/test_error_injection",
+      "binaryArgs": []
+    },
+    {
+      "cwd": "${workspaceFolder}/C/build",
+      "binaryPath": "${workspaceFolder}/C/build/test_frame",
+      "binaryArgs": []
+    },
+    {
+      "cwd": "${workspaceFolder}/C/build",
+      "binaryPath": "${workspaceFolder}/C/build/test_socket_utils",
+      "binaryArgs": []
+    },
+    {
+      "cwd": "${workspaceFolder}/C",
+      "binaryPath": "${workspaceFolder}/C/build/receiver",
+      "binaryArgs": [
+        "received.bin",
+        "crc32",
+        "4321",
+        "results/experiments.csv",
+        "manual"
+      ]
+    },
+    {
+      "cwd": "${workspaceFolder}/C",
+      "binaryPath": "${workspaceFolder}/C/build/sender",
+      "binaryArgs": [
+        "test_data/multi_frame.bin",
+        "crc32",
+        "none",
+        "127.0.0.1",
+        "4321",
+        "0x12345678"
+      ]
+    }
+  ]
+}

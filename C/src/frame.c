@@ -232,22 +232,33 @@ bool frame_fcs_size(
 
 bool frame_padded_payload_length(
   uint16_t payload_length,
+  frame_fcs_scheme_t scheme,
   size_t *padded_length
 )
 {
+  size_t fcs_size;
+  size_t minimum_length;
+  size_t maximum_length;
   size_t selected_length;
 
   if (
     padded_length == NULL ||
-    payload_length > MAX_PAYLOAD_SIZE
+    !frame_fcs_size(scheme, &fcs_size)
   ) {
+    return false;
+  }
+
+  minimum_length = MIN_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
+  maximum_length = MAX_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
+
+  if (payload_length > maximum_length) {
     return false;
   }
 
   selected_length = payload_length;
 
-  if (selected_length < MIN_PAYLOAD_SIZE) {
-    selected_length = MIN_PAYLOAD_SIZE;
+  if (selected_length < minimum_length) {
+    selected_length = minimum_length;
   }
 
   *padded_length = selected_length;
@@ -265,8 +276,8 @@ bool frame_wire_size(
 
   if (
     frame_size == NULL ||
-    !frame_padded_payload_length(payload_length, &padded_length) ||
-    !frame_fcs_size(scheme, &fcs_size)
+    !frame_fcs_size(scheme, &fcs_size) ||
+    !frame_padded_payload_length(payload_length, scheme, &padded_length)
   ) {
     return false;
   }
@@ -297,8 +308,12 @@ bool frame_serialize(
     serialized_frame == NULL ||
     serialized_length == NULL ||
     (header->payload_length > 0U && payload == NULL) ||
-    !frame_padded_payload_length(header->payload_length, &padded_length) ||
-    !frame_fcs_size(scheme, &fcs_size)
+    !frame_fcs_size(scheme, &fcs_size) ||
+    !frame_padded_payload_length(
+      header->payload_length,
+      scheme,
+      &padded_length
+    )
   ) {
     return false;
   }
@@ -392,6 +407,7 @@ bool frame_verify_and_extract(
     !frame_header_parse(serialized_frame, &parsed_header) ||
     !frame_padded_payload_length(
       parsed_header.payload_length,
+      scheme,
       &padded_length
     ) ||
     !frame_wire_size(parsed_header.payload_length, scheme, &expected_length) ||
