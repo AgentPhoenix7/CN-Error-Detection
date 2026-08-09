@@ -94,41 +94,49 @@ rejection, and output preservation on invalid input.
 The end-to-end control transfers the deterministic 4096-byte binary fixture in
 three frames for every scheme and compares the received file byte-for-byte.
 
-## 5. Pilot experiment
+## 5. Experiment results
 
-The checked-in CSV contains three repeats for all five schemes and five error
-conditions using seeds `0x12345678` through `0x1234567A`. Each run transferred
-the 4096-byte deterministic fixture as three frames.
+The quick checked-in CSV is useful for checking the workflow, but it is too
+small for a report-quality comparison. The `experiments_inference` target uses
+a 1 MiB deterministic fixture for injected-error trials and an 8 MiB fixture
+for no-error timing controls. With its default repeat counts, each
+scheme/pattern detection result contains about 14,000 corrupted frames, while
+the timing controls contain about 56,000 frames per scheme.
 
-| Scheme | Mean injected-error detection | Mean no-error receiver time (s) |
-| --- | ---: | ---: |
-| Checksum-16 | 1.000 | 0.000071 |
-| CRC-8 | 1.000 | 0.000490 |
-| CRC-10 | 1.000 | 0.000499 |
-| CRC-16 | 1.000 | 0.000542 |
-| CRC-32 | 1.000 | 0.000614 |
+No-error controls are evaluated separately from injected-error runs: they
+establish lossless transfer behavior, whereas error runs establish observed
+detection behavior.
 
-All no-error controls accepted three frames and reproduced all 4096 bytes. In
-this small seeded pilot, every deliberately corrupted frame was rejected. The
-checksum was faster because it processes 16-bit words, while the academic CRC
-implementation performs bitwise polynomial division. Maximum resident-set
-measurements were identical at 19084 KiB in this environment and therefore do
-not distinguish the algorithms.
+The error figure reports *undetected* frame rate rather than detection rate.
+This makes the useful comparison visible: a 100% detection rate becomes 0%
+undetected, and any observed miss is shown explicitly. A 0% cell means that no
+miss was observed in this experiment; it is not a claim that a miss is
+theoretically impossible.
 
-![Detection rate](../results/plots/detection_rate.svg)
+![Undetected error rate](../results/plots/undetected_rate.svg)
+
+The timing figure uses only no-error controls, so its bars compare the
+implementation cost of each FCS scheme rather than differences caused by
+rejected frames. Whiskers show one standard deviation across runs. The values
+are receiver elapsed times for a small loopback transfer, not end-to-end
+network latency.
 
 ![Execution time](../results/plots/execution_time.svg)
 
-![Memory usage](../results/plots/memory_usage.svg)
+Peak resident-set size is presented as a summary table rather than a bar chart.
+When every scheme has the same value, a bar chart would falsely imply a useful
+performance distinction.
+
+![Peak memory summary](../results/plots/memory_summary.svg)
 
 ## 6. Interpretation and limitations
 
-The pilot confirms implementation behavior, but nine corrupted frames per
-scheme/pattern are too few for a defensible estimate of rare undetected-error
-rates. A final comparison should use a substantially larger input and more
-seeds, retain the same input for every scheme, and report both the number of
-corrupted frames and the number rejected. Timing should also use larger inputs
-so startup and scheduling noise are small relative to algorithm execution.
+The present experiment demonstrates observed behavior for the selected seeds;
+it does not estimate a general undetected-error probability. A final comparison
+should use a substantially larger input and more seeds, retain the same input
+for every scheme, and report both the number of corrupted frames and the number
+rejected. Timing should also use larger inputs so scheduling noise is small
+relative to algorithm execution.
 
 The current bitwise CRC implementation intentionally favors a transparent
 academic model over lookup-table optimization. Its timing therefore compares
@@ -141,7 +149,7 @@ From the repository root:
 ```bash
 make -C C test
 make -C C test_end_to_end
-make -C C experiments EXPERIMENT_REPEATS=3
+make -C C experiments_inference
 make -C C plots
 ```
 

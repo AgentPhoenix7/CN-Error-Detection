@@ -25,8 +25,13 @@ RECEIVER_SOURCES := src/receiver.c src/socket_utils.c src/frame.c src/checksum.c
 PYTHON_RUN := uv run --project .
 EXPERIMENT_INPUT ?= test_data/multi_frame.bin
 EXPERIMENT_REPEATS ?= 3
+DETECTION_INPUT ?= test_data/detection_1m.bin
+DETECTION_REPEATS ?= 20
+PERFORMANCE_INPUT ?= test_data/performance_8m.bin
+PERFORMANCE_REPEATS ?= 10
+INFERENCE_RESULTS ?= results/experiments.csv
 
-.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_end_to_end generate_test_data experiments plots check_config_header check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
 
 all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST) $(FRAME_TEST) $(SOCKET_UTILS_TEST) $(SENDER) $(RECEIVER)
 
@@ -82,6 +87,10 @@ generate_test_data:
 
 experiments: all
 	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --repeats $(EXPERIMENT_REPEATS)
+
+experiments_inference: all generate_test_data
+	$(PYTHON_RUN) tools/run_experiments.py $(DETECTION_INPUT) --patterns single two odd burst --repeats $(DETECTION_REPEATS) --results $(INFERENCE_RESULTS)
+	$(PYTHON_RUN) tools/run_experiments.py $(PERFORMANCE_INPUT) --patterns none --repeats $(PERFORMANCE_REPEATS) --results $(INFERENCE_RESULTS) --append
 
 plots:
 	$(PYTHON_RUN) tools/plot_results.py results/experiments.csv results/plots

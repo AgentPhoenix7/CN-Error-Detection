@@ -115,6 +115,20 @@ Override the experiment input or repeat count with, for example:
 make -C C experiments EXPERIMENT_INPUT=test_data/exact_frame.bin EXPERIMENT_REPEATS=10
 ```
 
+For report-quality inference rather than a quick smoke test, use the dedicated
+fixtures and experiment target:
+
+```bash
+make -C C experiments_inference
+make -C C plots
+```
+
+This runs 20 repeats of the 1 MiB detection fixture for each injected-error
+pattern (about 14,000 corrupted frames per scheme/pattern) and 10 no-error
+repeats of the 8 MiB performance fixture. The combined results are written to
+`C/results/experiments.csv`: error rows are used for detection inference, and
+no-error rows are used for timing comparison.
+
 The receiver records detection counts, wall-clock time, user/system CPU time,
 and maximum resident-set size in CSV. The plotting tool creates SVG figures
 without third-party Python packages.

@@ -1,69 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
 <rect width="100%" height="100%" fill="white"/>
-<text x="600.0" y="34" text-anchor="middle" font-family="sans-serif" font-size="24">Mean receiver execution time</text>
-<line x1="90" y1="70" x2="90" y2="470" stroke="#222"/>
-<line x1="90" y1="470" x2="1170" y2="470" stroke="#222"/>
-<text x="22" y="270.0" text-anchor="middle" transform="rotate(-90 22 270.0)" font-family="sans-serif" font-size="15">Seconds</text>
-<line x1="90" y1="470.0" x2="1170" y2="470.0" stroke="#DDD"/>
-<text x="82" y="475.0" text-anchor="end" font-family="sans-serif" font-size="12">0</text>
-<line x1="90" y1="390.0" x2="1170" y2="390.0" stroke="#DDD"/>
-<text x="82" y="395.0" text-anchor="end" font-family="sans-serif" font-size="12">0.0001228</text>
-<line x1="90" y1="310.0" x2="1170" y2="310.0" stroke="#DDD"/>
-<text x="82" y="315.0" text-anchor="end" font-family="sans-serif" font-size="12">0.0002456</text>
-<line x1="90" y1="230.0" x2="1170" y2="230.0" stroke="#DDD"/>
-<text x="82" y="235.0" text-anchor="end" font-family="sans-serif" font-size="12">0.0003683</text>
-<line x1="90" y1="150.0" x2="1170" y2="150.0" stroke="#DDD"/>
-<text x="82" y="155.0" text-anchor="end" font-family="sans-serif" font-size="12">0.0004911</text>
-<line x1="90" y1="70.0" x2="1170" y2="70.0" stroke="#DDD"/>
-<text x="82" y="75.0" text-anchor="end" font-family="sans-serif" font-size="12">0.0006139</text>
-<rect x="94.0" y="443.9" width="35.2" height="26.1" fill="#3366CC"/>
-<text x="111.6" y="484" text-anchor="end" transform="rotate(-55 111.6 484)" font-family="sans-serif" font-size="11">checksum/burst</text>
-<rect x="137.2" y="424.1" width="35.2" height="45.9" fill="#3366CC"/>
-<text x="154.8" y="484" text-anchor="end" transform="rotate(-55 154.8 484)" font-family="sans-serif" font-size="11">checksum/none</text>
-<rect x="180.4" y="447.9" width="35.2" height="22.1" fill="#3366CC"/>
-<text x="198.0" y="484" text-anchor="end" transform="rotate(-55 198.0 484)" font-family="sans-serif" font-size="11">checksum/odd</text>
-<rect x="223.6" y="430.4" width="35.2" height="39.6" fill="#3366CC"/>
-<text x="241.2" y="484" text-anchor="end" transform="rotate(-55 241.2 484)" font-family="sans-serif" font-size="11">checksum/single</text>
-<rect x="266.8" y="429.6" width="35.2" height="40.4" fill="#3366CC"/>
-<text x="284.4" y="484" text-anchor="end" transform="rotate(-55 284.4 484)" font-family="sans-serif" font-size="11">checksum/two</text>
-<rect x="310.0" y="139.1" width="35.2" height="330.9" fill="#FF9900"/>
-<text x="327.6" y="484" text-anchor="end" transform="rotate(-55 327.6 484)" font-family="sans-serif" font-size="11">crc10/burst</text>
-<rect x="353.2" y="144.8" width="35.2" height="325.2" fill="#FF9900"/>
-<text x="370.8" y="484" text-anchor="end" transform="rotate(-55 370.8 484)" font-family="sans-serif" font-size="11">crc10/none</text>
-<rect x="396.4" y="134.0" width="35.2" height="336.0" fill="#FF9900"/>
-<text x="414.0" y="484" text-anchor="end" transform="rotate(-55 414.0 484)" font-family="sans-serif" font-size="11">crc10/odd</text>
-<rect x="439.6" y="145.3" width="35.2" height="324.7" fill="#FF9900"/>
-<text x="457.2" y="484" text-anchor="end" transform="rotate(-55 457.2 484)" font-family="sans-serif" font-size="11">crc10/single</text>
-<rect x="482.8" y="129.7" width="35.2" height="340.3" fill="#FF9900"/>
-<text x="500.4" y="484" text-anchor="end" transform="rotate(-55 500.4 484)" font-family="sans-serif" font-size="11">crc10/two</text>
-<rect x="526.0" y="120.3" width="35.2" height="349.7" fill="#109618"/>
-<text x="543.6" y="484" text-anchor="end" transform="rotate(-55 543.6 484)" font-family="sans-serif" font-size="11">crc16/burst</text>
-<rect x="569.2" y="116.7" width="35.2" height="353.3" fill="#109618"/>
-<text x="586.8" y="484" text-anchor="end" transform="rotate(-55 586.8 484)" font-family="sans-serif" font-size="11">crc16/none</text>
-<rect x="612.4" y="135.7" width="35.2" height="334.3" fill="#109618"/>
-<text x="630.0" y="484" text-anchor="end" transform="rotate(-55 630.0 484)" font-family="sans-serif" font-size="11">crc16/odd</text>
-<rect x="655.6" y="131.5" width="35.2" height="338.5" fill="#109618"/>
-<text x="673.2" y="484" text-anchor="end" transform="rotate(-55 673.2 484)" font-family="sans-serif" font-size="11">crc16/single</text>
-<rect x="698.8" y="137.7" width="35.2" height="332.3" fill="#109618"/>
-<text x="716.4" y="484" text-anchor="end" transform="rotate(-55 716.4 484)" font-family="sans-serif" font-size="11">crc16/two</text>
-<rect x="742.0" y="133.6" width="35.2" height="336.4" fill="#990099"/>
-<text x="759.6" y="484" text-anchor="end" transform="rotate(-55 759.6 484)" font-family="sans-serif" font-size="11">crc32/burst</text>
-<rect x="785.2" y="70.0" width="35.2" height="400.0" fill="#990099"/>
-<text x="802.8" y="484" text-anchor="end" transform="rotate(-55 802.8 484)" font-family="sans-serif" font-size="11">crc32/none</text>
-<rect x="828.4" y="127.3" width="35.2" height="342.7" fill="#990099"/>
-<text x="846.0" y="484" text-anchor="end" transform="rotate(-55 846.0 484)" font-family="sans-serif" font-size="11">crc32/odd</text>
-<rect x="871.6" y="112.0" width="35.2" height="358.0" fill="#990099"/>
-<text x="889.2" y="484" text-anchor="end" transform="rotate(-55 889.2 484)" font-family="sans-serif" font-size="11">crc32/single</text>
-<rect x="914.8" y="127.5" width="35.2" height="342.5" fill="#990099"/>
-<text x="932.4" y="484" text-anchor="end" transform="rotate(-55 932.4 484)" font-family="sans-serif" font-size="11">crc32/two</text>
-<rect x="958.0" y="150.2" width="35.2" height="319.8" fill="#DC3912"/>
-<text x="975.6" y="484" text-anchor="end" transform="rotate(-55 975.6 484)" font-family="sans-serif" font-size="11">crc8/burst</text>
-<rect x="1001.2" y="150.6" width="35.2" height="319.4" fill="#DC3912"/>
-<text x="1018.8" y="484" text-anchor="end" transform="rotate(-55 1018.8 484)" font-family="sans-serif" font-size="11">crc8/none</text>
-<rect x="1044.4" y="141.2" width="35.2" height="328.8" fill="#DC3912"/>
-<text x="1062.0" y="484" text-anchor="end" transform="rotate(-55 1062.0 484)" font-family="sans-serif" font-size="11">crc8/odd</text>
-<rect x="1087.6" y="151.7" width="35.2" height="318.3" fill="#DC3912"/>
-<text x="1105.2" y="484" text-anchor="end" transform="rotate(-55 1105.2 484)" font-family="sans-serif" font-size="11">crc8/single</text>
-<rect x="1130.8" y="149.1" width="35.2" height="320.9" fill="#DC3912"/>
-<text x="1148.4" y="484" text-anchor="end" transform="rotate(-55 1148.4 484)" font-family="sans-serif" font-size="11">crc8/two</text>
+<text x="450.0" y="34" text-anchor="middle" font-family="sans-serif" font-size="24">Receiver time for no-error controls</text>
+<text x="450" y="62" text-anchor="middle" font-family="sans-serif" font-size="14">Mean receiver elapsed time in milliseconds; whiskers show one standard deviation.</text>
+<line x1="100" y1="100" x2="100" y2="450" stroke="#222"/>
+<line x1="100" y1="450" x2="865" y2="450" stroke="#222"/>
+<line x1="100" y1="450.0" x2="865" y2="450.0" stroke="#DDD"/>
+<text x="92" y="455.0" text-anchor="end" font-family="sans-serif" font-size="12">0.000</text>
+<line x1="100" y1="380.0" x2="865" y2="380.0" stroke="#DDD"/>
+<text x="92" y="385.0" text-anchor="end" font-family="sans-serif" font-size="12">173.099</text>
+<line x1="100" y1="310.0" x2="865" y2="310.0" stroke="#DDD"/>
+<text x="92" y="315.0" text-anchor="end" font-family="sans-serif" font-size="12">346.198</text>
+<line x1="100" y1="240.0" x2="865" y2="240.0" stroke="#DDD"/>
+<text x="92" y="245.0" text-anchor="end" font-family="sans-serif" font-size="12">519.297</text>
+<line x1="100" y1="170.0" x2="865" y2="170.0" stroke="#DDD"/>
+<text x="92" y="175.0" text-anchor="end" font-family="sans-serif" font-size="12">692.397</text>
+<line x1="100" y1="100.0" x2="865" y2="100.0" stroke="#DDD"/>
+<text x="92" y="105.0" text-anchor="end" font-family="sans-serif" font-size="12">865.496</text>
+<rect x="139.8" y="440.7" width="73.4" height="9.3" fill="#4C78A8"/>
+<line x1="176.5" y1="439.7" x2="176.5" y2="441.7" stroke="#222" stroke-width="2"/>
+<line x1="169.5" y1="439.7" x2="183.5" y2="439.7" stroke="#222" stroke-width="2"/>
+<line x1="169.5" y1="441.7" x2="183.5" y2="441.7" stroke="#222" stroke-width="2"/>
+<text x="176.5" y="478" text-anchor="middle" font-family="sans-serif" font-size="14">checksum</text>
+<text x="176.5" y="432.7" text-anchor="middle" font-family="sans-serif" font-size="12">22.945 ms</text>
+<rect x="292.8" y="135.2" width="73.4" height="314.8" fill="#4C78A8"/>
+<line x1="329.5" y1="103.3" x2="329.5" y2="167.2" stroke="#222" stroke-width="2"/>
+<line x1="322.5" y1="103.3" x2="336.5" y2="103.3" stroke="#222" stroke-width="2"/>
+<line x1="322.5" y1="167.2" x2="336.5" y2="167.2" stroke="#222" stroke-width="2"/>
+<text x="329.5" y="478" text-anchor="middle" font-family="sans-serif" font-size="14">crc8</text>
+<text x="329.5" y="127.2" text-anchor="middle" font-family="sans-serif" font-size="12">778.385 ms</text>
+<rect x="445.8" y="145.1" width="73.4" height="304.9" fill="#4C78A8"/>
+<line x1="482.5" y1="128.7" x2="482.5" y2="161.4" stroke="#222" stroke-width="2"/>
+<line x1="475.5" y1="128.7" x2="489.5" y2="128.7" stroke="#222" stroke-width="2"/>
+<line x1="475.5" y1="161.4" x2="489.5" y2="161.4" stroke="#222" stroke-width="2"/>
+<text x="482.5" y="478" text-anchor="middle" font-family="sans-serif" font-size="14">crc10</text>
+<text x="482.5" y="137.1" text-anchor="middle" font-family="sans-serif" font-size="12">754.006 ms</text>
+<rect x="598.8" y="130.0" width="73.4" height="320.0" fill="#4C78A8"/>
+<line x1="635.5" y1="103.8" x2="635.5" y2="156.2" stroke="#222" stroke-width="2"/>
+<line x1="628.5" y1="103.8" x2="642.5" y2="103.8" stroke="#222" stroke-width="2"/>
+<line x1="628.5" y1="156.2" x2="642.5" y2="156.2" stroke="#222" stroke-width="2"/>
+<text x="635.5" y="478" text-anchor="middle" font-family="sans-serif" font-size="14">crc16</text>
+<text x="635.5" y="122.0" text-anchor="middle" font-family="sans-serif" font-size="12">791.303 ms</text>
+<rect x="751.8" y="121.2" width="73.4" height="328.8" fill="#4C78A8"/>
+<line x1="788.5" y1="100.0" x2="788.5" y2="142.4" stroke="#222" stroke-width="2"/>
+<line x1="781.5" y1="100.0" x2="795.5" y2="100.0" stroke="#222" stroke-width="2"/>
+<line x1="781.5" y1="142.4" x2="795.5" y2="142.4" stroke="#222" stroke-width="2"/>
+<text x="788.5" y="478" text-anchor="middle" font-family="sans-serif" font-size="14">crc32</text>
+<text x="788.5" y="113.2" text-anchor="middle" font-family="sans-serif" font-size="12">813.099 ms</text>
+<text x="24" y="275.0" text-anchor="middle" transform="rotate(-90 24 275.0)" font-family="sans-serif" font-size="15">Milliseconds</text>
+<text x="450" y="522" text-anchor="middle" font-family="sans-serif" font-size="13">This is application receiver time for a loopback transfer, not network latency.</text>
 </svg>
