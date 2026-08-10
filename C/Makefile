@@ -25,13 +25,15 @@ RECEIVER_SOURCES := src/receiver.c src/socket_utils.c src/frame.c src/checksum.c
 PYTHON_RUN := uv run --project .
 EXPERIMENT_INPUT ?= test_data/multi_frame.bin
 EXPERIMENT_REPEATS ?= 3
-DETECTION_INPUT ?= test_data/detection_1m.bin
+DETECTION_INPUT ?= input_files/detection_1m.txt
 DETECTION_REPEATS ?= 20
-PERFORMANCE_INPUT ?= test_data/performance_8m.bin
+PERFORMANCE_INPUT ?= input_files/performance_8m.txt
 PERFORMANCE_REPEATS ?= 10
-INFERENCE_RESULTS ?= results/experiments.csv
+ERROR_INTERVAL ?= 2
+INFERENCE_RESULTS ?= results/experiments_mixed.csv
+PLOT_INPUT ?= $(INFERENCE_RESULTS)
 
-.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_end_to_end test_mixed_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
 
 all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST) $(FRAME_TEST) $(SOCKET_UTILS_TEST) $(SENDER) $(RECEIVER)
 
@@ -82,18 +84,21 @@ $(RECEIVER): $(RECEIVER_SOURCES) $(FRAME_HEADER) $(SOCKET_UTILS_HEADER) | $(BUIL
 test_end_to_end: all
 	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --schemes checksum crc8 crc10 crc16 crc32 --patterns none --repeats 1 --results /tmp/assignment1-e2e.csv
 
+test_mixed_end_to_end: all
+	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --schemes checksum crc8 crc10 crc16 crc32 --patterns single --repeats 1 --error-interval 2 --results /tmp/assignment1-mixed-e2e.csv --output-directory /tmp/assignment1-mixed-e2e-output
+
 generate_test_data:
 	$(PYTHON_RUN) tools/generate_test_data.py
 
 experiments: all
-	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --repeats $(EXPERIMENT_REPEATS)
+	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --repeats $(EXPERIMENT_REPEATS) --error-interval $(ERROR_INTERVAL)
 
 experiments_inference: all generate_test_data
-	$(PYTHON_RUN) tools/run_experiments.py $(DETECTION_INPUT) --patterns single two odd burst --repeats $(DETECTION_REPEATS) --results $(INFERENCE_RESULTS)
+	$(PYTHON_RUN) tools/run_experiments.py $(DETECTION_INPUT) --patterns single two odd burst --repeats $(DETECTION_REPEATS) --error-interval $(ERROR_INTERVAL) --results $(INFERENCE_RESULTS)
 	$(PYTHON_RUN) tools/run_experiments.py $(PERFORMANCE_INPUT) --patterns none --repeats $(PERFORMANCE_REPEATS) --results $(INFERENCE_RESULTS) --append
 
 plots:
-	$(PYTHON_RUN) tools/plot_results.py results/experiments.csv results/plots
+	$(PYTHON_RUN) tools/plot_results.py $(PLOT_INPUT) results/plots
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

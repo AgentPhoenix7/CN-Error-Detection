@@ -4,7 +4,7 @@
 
 The repository root contains shared assignment references, including the specification PDFs, `instruction.jpg`, and the main `README.md`. Language implementations belong in separate directories; the active implementation is under `C/`.
 
-Within `C/`, public interfaces live in `include/`, implementations in `src/`, and module tests in `tests/`. Test inputs belong in `test_data/`. Generated experiment data and plots go in `results/`, Python experiment and plotting utilities in `tools/`, and written analysis in `report/`. Keep generated binaries and object files in `C/build/`. The Python tools use the uv project declared by `C/pyproject.toml` and `C/uv.lock`; keep the local environment in ignored `C/.venv/`.
+Within `C/`, public interfaces live in `include/`, implementations in `src/`, and module tests in `tests/`. Test fixtures belong in `test_data/`; large files intended for transfer belong in `input_files/`, and receiver outputs go in ignored `output_files/`. Generated experiment data and plots go in `results/`, Python experiment and plotting utilities in `tools/`, and written analysis in `report/`. Keep generated binaries and object files in `C/build/`. The Python tools use the uv project declared by `C/pyproject.toml` and `C/uv.lock`; keep the local environment in ignored `C/.venv/`.
 
 Future C++, Python, and Java work must remain in their corresponding top-level directories, with independent build files and `.gitignore` rules.
 
@@ -21,6 +21,7 @@ make -C C test_error_injection # run error-injection tests
 make -C C test_frame        # run frame serialization tests
 make -C C test_socket_utils # run exact-length socket helper tests
 make -C C test_end_to_end   # transfer a control file with every scheme
+make -C C test_mixed_end_to_end # verify clean/error frame mixing end to end
 make -C C check_crc_header  # validate the CRC interface
 make -C C generate_test_data # regenerate deterministic fixtures through uv
 make -C C experiments       # run the seeded experiment matrix through uv

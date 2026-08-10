@@ -1,8 +1,8 @@
 # Error Detection with Checksum and CRC
 
 This repository contains the C17 implementation of a sender/receiver error-
-detection simulation. The programs transfer binary files over TCP using an
-Ethernet-like frame, optionally corrupt each transmitted frame, and record
+detection simulation. The programs transfer files over TCP using an
+Ethernet-like frame, optionally corrupt selected transmitted frames, and record
 which frames are accepted or rejected by a 16-bit one's-complement checksum or
 one of four CRC variants.
 
@@ -59,38 +59,45 @@ Socket tests and end-to-end tests require permission to create local sockets:
 
 ```bash
 make -C C test_end_to_end
+make -C C test_mixed_end_to_end
 ```
 
 ## Run sender and receiver manually
 
+Large text files intended for transfer live in `C/input_files/`. Received
+files are written to `C/output_files/`; generated experiment outputs in that
+folder are ignored by Git.
+
 Start the receiver first:
 
 ```bash
-C/build/receiver received.bin crc32 4321 C/results/experiments.csv single
+C/build/receiver C/output_files/received.txt crc32 4321
 ```
 
 In another terminal, start the sender:
 
 ```bash
-C/build/sender C/test_data/multi_frame.bin crc32 single 127.0.0.1 4321 0x12345678
+C/build/sender C/input_files/detection_1m.txt crc32 single 127.0.0.1 4321 0x12345678 2
 ```
 
 Sender syntax:
 
 ```text
-sender INPUT SCHEME PATTERN [HOST] [PORT] [SEED]
+sender INPUT SCHEME PATTERN [HOST] [PORT] [SEED] [ERROR_INTERVAL]
 ```
 
 Receiver syntax:
 
 ```text
-receiver OUTPUT SCHEME [PORT] [CSV_PATH] [PATTERN_LABEL]
+receiver OUTPUT SCHEME [PORT]
 ```
 
 Schemes are `checksum`, `crc8`, `crc10`, `crc16`, and `crc32`. Error patterns
-are `none`, `single`, `two`, `odd`, `burst`, and `random`. The explicit error
-patterns corrupt every frame. `random` deterministically chooses one of the
-four injected patterns for each frame from the supplied seed.
+are `none`, `single`, `two`, `odd`, `burst`, and `random`. For a non-`none`
+pattern, the default error interval is two: frame indices 0, 2, 4, and so on
+are corrupted, while the intervening frames remain clean. `random`
+deterministically chooses one of the four injected patterns at each selected
+frame. Set the interval to one only when every frame should be corrupted.
 
 Rejected frames are not written to the receiver's output file. Consequently,
 only a `none` control run is expected to reproduce the input byte-for-byte.
@@ -105,8 +112,8 @@ cd C
 uv venv .venv
 uv sync
 uv run tools/generate_test_data.py
-uv run tools/run_experiments.py test_data/multi_frame.bin --repeats 3
-uv run tools/plot_results.py results/experiments.csv results/plots
+uv run tools/run_experiments.py input_files/detection_1m.txt --repeats 3 --error-interval 2
+uv run tools/plot_results.py results/experiments_mixed.csv results/plots
 ```
 
 Equivalent Make targets are `generate_test_data`, `experiments`, and `plots`.
@@ -124,15 +131,18 @@ make -C C experiments_inference
 make -C C plots
 ```
 
-This runs 20 repeats of the 1 MiB detection fixture for each injected-error
-pattern (about 14,000 corrupted frames per scheme/pattern) and 10 no-error
-repeats of the 8 MiB performance fixture. The combined results are written to
-`C/results/experiments.csv`: error rows are used for detection inference, and
-no-error rows are used for timing comparison.
+This runs 20 repeats of the 1 MiB text input for each injected-error pattern
+(about 7,000 injected and 7,000 clean frames per scheme/pattern with the
+default interval) and 10 no-error repeats of the 8 MiB text input. The combined
+results are written to `C/results/experiments_mixed.csv`: error rows are used
+for detection inference, and no-error rows are used for timing and resource
+comparison.
 
-The receiver records detection counts, wall-clock time, user/system CPU time,
-and maximum resident-set size in CSV. The plotting tool creates SVG figures
-without third-party Python packages.
+The runner combines sender-side clean/injected counts with receiver-side
+accepted/rejected counts. It records file sizes plus elapsed time,
+user/system CPU time, and peak resident-set size separately for sender and
+receiver. The plotting tool creates SVG figures without third-party Python
+packages.
 
 See [C/report/report.md](C/report/report.md) for design details, pilot results,
 and interpretation guidance.

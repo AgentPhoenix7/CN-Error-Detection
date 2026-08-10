@@ -35,10 +35,30 @@ def write_lcg_file(path: Path, length: int, seed: int) -> None:
             remaining -= chunk_length
 
 
+def write_text_file(path: Path, length: int, label: str) -> None:
+    """Write an exact-size, deterministic, human-readable experiment input."""
+    paragraph = (
+        f"{label}: checksum and CRC experiments transfer this text from the "
+        "sender to the receiver. Some frames remain clean, while selected "
+        "frames receive reproducible bit errors after their FCS is computed.\n"
+    ).encode("ascii")
+    remaining = length
+
+    with path.open("wb") as output:
+        while remaining > 0:
+            chunk = paragraph[:remaining]
+            output.write(chunk)
+            remaining -= len(chunk)
+
+
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     test_data = root / "test_data"
+    input_files = root / "input_files"
+    output_files = root / "output_files"
     test_data.mkdir(exist_ok=True)
+    input_files.mkdir(exist_ok=True)
+    output_files.mkdir(exist_ok=True)
     (test_data / "empty.bin").write_bytes(b"")
     (test_data / "small.txt").write_text(
         "Error detection over TCP preserves binary payloads.\n",
@@ -59,6 +79,16 @@ def main() -> None:
         test_data / "performance_8m.bin",
         8_388_608,
         0x2468_ACE0,
+    )
+    write_text_file(
+        input_files / "detection_1m.txt",
+        1_048_576,
+        "One-mebibyte detection input",
+    )
+    write_text_file(
+        input_files / "performance_8m.txt",
+        8_388_608,
+        "Eight-mebibyte performance input",
     )
 
 

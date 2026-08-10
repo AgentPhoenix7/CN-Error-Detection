@@ -32,6 +32,8 @@ venv/
 # Temporary experiment output
 /results/*.tmp
 /results/raw/
+/output_files/*
+!/output_files/.gitkeep
 
 # Generated report intermediates
 /report/*.aux

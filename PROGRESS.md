@@ -63,6 +63,10 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - FCS sizes: checksum 2, CRC-8 1, CRC-10 2, CRC-16 2, CRC-32 4 bytes.
 - Final incomplete data is zero-padded. Its header preserves the true payload
   length so binary files that legitimately end in zero bytes remain unambiguous.
+- Injected-pattern transfers select frame index zero and then one frame per
+  configurable positive error interval. The default interval is two, leaving
+  approximately half the frames clean in the same transfer. `none` remains a
+  fully clean, byte-for-byte control.
 - Controlled error functions use deterministic bit positions. Random selectors
   use caller-seeded state, and the two-isolated-bit pattern chooses
   nonadjacent positions.
@@ -84,8 +88,8 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - Local VS Code launch configurations exist for the checksum, CRC,
   error-injection, and frame test binaries.
 - Make targets include `all`, `test`, every module-specific test,
-  `test_end_to_end`, header checks, fixture generation, experiments, plots,
-  and `clean`.
+  `test_end_to_end`, `test_mixed_end_to_end`, header checks, fixture
+  generation, experiments, plots, and `clean`.
 - `C/pyproject.toml` and `C/uv.lock` define the Python tool environment.
 - `generate_test_data.py` recreates deterministic empty, text, maximum-payload,
   and multi-frame fixtures.
@@ -183,25 +187,36 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   EOF from a truncated record.
 - Five permanent socket tests cover exact byte transfer, clean EOF, partial
   record rejection, zero-length operations, and invalid inputs.
-- `sender` reads binary input in payload-sized chunks, builds sequenced frames,
-  applies the selected seeded error pattern after calculating the FCS, and
-  transmits length-delimited records.
+- `sender` reads input in payload-sized chunks, builds sequenced frames,
+  applies the selected seeded error pattern only at the configured interval
+  after calculating the FCS, and reports clean/injected counts plus its own
+  elapsed time, CPU time, and peak RSS.
 - `receiver` validates complete records, writes only accepted unpadded payload,
-  reports accepted/rejected counts, and optionally appends CSV metrics.
+  and reports accepted/rejected counts plus its own elapsed time, CPU time,
+  and peak RSS.
 - Command-line schemes are `checksum`, `crc8`, `crc10`, `crc16`, and `crc32`.
   Error modes are `none`, `single`, `two`, `odd`, `burst`, and `random`.
 
 ### Experiments, plots, and documentation
 
+- `C/input_files/` contains deterministic 1 MiB and 8 MiB text inputs;
+  `C/output_files/` contains the latest received file for each experiment
+  combination and ignores generated outputs while retaining the directory.
 - `run_experiments.py` starts sender/receiver pairs, uses reproducible seeds,
-  validates lossless controls byte-for-byte, and records results.
+  validates lossless controls and frame-count invariants, combines both
+  processes' metrics, and records input/output sizes.
 - `plot_results.py` uses only the Python standard library to aggregate repeats
-  and produce detection-rate, execution-time, and memory SVG charts.
-- The checked-in pilot contains 75 runs: three repeats across five schemes and
-  five error conditions using the deterministic 4096-byte fixture.
-- All pilot control transfers reproduced the input. Every injected error in
-  this small seeded sample was rejected; the report explicitly notes that the
-  sample is too small for rare undetected-error estimates.
+  and produce mixed-frame outcome, undetected-rate, execution-time, and
+  sender/receiver resource SVGs.
+- `C/results/experiments_mixed.csv` contains a 75-run large-text pilot: three
+  repeats of four mixed error patterns on 1 MiB and three no-error resource
+  controls on 8 MiB for all five schemes.
+- The pilot kept about half of injected-pattern frames clean. Observed misses
+  were four checksum burst frames, twelve CRC-8 two-bit frames, and one CRC-10
+  two-bit frame; CRC-16 and CRC-32 had no observed misses in this sample.
+- Every 8 MiB no-error control reproduced its input byte-for-byte. Detection
+  rate is rejected divided by injected frames, never divided by all received
+  frames.
 - `README.md` documents build, protocol, program usage, uv setup, experiments,
   and plotting. `C/report/report.md` documents design, methodology, pilot
   results, charts, interpretation, and limitations.
@@ -223,31 +238,29 @@ Additional verification completed:
 
 - GCC `-fanalyzer` build with warnings treated as errors;
 - lossless three-frame control transfers for all five schemes;
+- mixed three-frame transfers for all five schemes, each with one clean and
+  two injected frames and consistent sender/receiver category counts;
+- a 75-run large-text pilot with validated lossless controls;
 - lossless 1499-byte maximum-payload transfers for all five schemes;
 - empty-file transfer; and
-- validation of the generated CSV and three SVG plots.
-
-Completed implementation commit: `3c0395b` on `main`. This documentation update
-leaves `AGENTS.md` modified and `PROGRESS.md` untracked until they are committed.
+- syntax validation of Python tools and structural/XML validation of the four
+  generated SVG plots.
 
 ## Exact Next Step
 
-The required C implementation is complete. The next step is a final empirical
-campaign with a substantially larger binary input and enough seeded repeats to
-estimate rare undetected errors. Use the same input and seeds for every scheme,
-then regenerate the plots and replace the pilot table in the report.
+The mixed-frame and resource-reporting implementation is complete. The next
+step is the final configured empirical campaign, followed by replacing the
+three-repeat pilot figures with the final results.
 
 Example from the repository root:
 
 ```bash
-make -C C experiments \
-  EXPERIMENT_INPUT=/path/to/large-input.bin \
-  EXPERIMENT_REPEATS=100
+make -C C experiments_inference
 make -C C plots
 ```
 
 ## Remaining Roadmap
 
-1. Run and review the larger final experiment campaign.
-2. Update the report's result table and interpretation from that final CSV.
+1. Run and review `experiments_inference` on the demonstration machine.
+2. Update the report's pilot table and interpretation from that final CSV.
 3. Rehearse the sender/receiver demonstration and prepare the final submission.

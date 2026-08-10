@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/resource.h>
 #include <time.h>
 #include <unistd.h>
@@ -28,7 +27,7 @@ static void receiver_print_usage(const char *program)
 {
   fprintf(
     stderr,
-    "Usage: %s OUTPUT SCHEME [PORT] [CSV_PATH] [PATTERN_LABEL]\n"
+    "Usage: %s OUTPUT SCHEME [PORT]\n"
     "  SCHEME: checksum | crc8 | crc10 | crc16 | crc32\n",
     program
   );
@@ -79,75 +78,8 @@ static double receiver_timeval_difference(
     (double)(end->tv_usec - start->tv_usec) / 1000000.0;
 }
 
-static bool receiver_append_metrics(
-  const char *path,
-  frame_fcs_scheme_t scheme,
-  const char *pattern_label,
-  const receiver_metrics_t *metrics
-)
-{
-  FILE *csv;
-  long existing_size;
-  double detection_rate;
-
-  csv = fopen(path, "a+");
-
-  if (csv == NULL) {
-    return false;
-  }
-
-  if (fseek(csv, 0L, SEEK_END) != 0) {
-    (void)fclose(csv);
-    return false;
-  }
-
-  existing_size = ftell(csv);
-
-  if (existing_size < 0L) {
-    (void)fclose(csv);
-    return false;
-  }
-
-  if (existing_size == 0L) {
-    fputs(
-      "scheme,error_pattern,frames_received,frames_accepted,"
-      "frames_rejected,detection_rate,payload_bytes_written,"
-      "elapsed_seconds,user_cpu_seconds,system_cpu_seconds,max_rss_kb\n",
-      csv
-    );
-  }
-
-  detection_rate = metrics->frames_received == 0U
-    ? 0.0
-    : (double)metrics->frames_rejected /
-      (double)metrics->frames_received;
-
-  if (fprintf(
-    csv,
-    "%s,%s,%zu,%zu,%zu,%.9f,%zu,%.9f,%.9f,%.9f,%ld\n",
-    frame_fcs_scheme_name(scheme),
-    pattern_label,
-    metrics->frames_received,
-    metrics->frames_accepted,
-    metrics->frames_rejected,
-    detection_rate,
-    metrics->payload_bytes_written,
-    metrics->elapsed_seconds,
-    metrics->user_cpu_seconds,
-    metrics->system_cpu_seconds,
-    metrics->max_rss_kb
-  ) < 0) {
-    (void)fclose(csv);
-    return false;
-  }
-
-  return fclose(csv) == 0;
-}
-
 int main(int argc, char *argv[])
 {
-  const char *csv_path = NULL;
-  const char *pattern_label = "unspecified";
   uint16_t port = DEFAULT_SERVER_PORT;
   frame_fcs_scheme_t scheme;
   uint8_t length_prefix[2];
@@ -167,7 +99,7 @@ int main(int argc, char *argv[])
   FILE *output = NULL;
   int status = EXIT_FAILURE;
 
-  if (argc < 3 || argc > 6) {
+  if (argc < 3 || argc > 4) {
     receiver_print_usage(argv[0]);
     return EXIT_FAILURE;
   }
@@ -178,14 +110,6 @@ int main(int argc, char *argv[])
   ) {
     receiver_print_usage(argv[0]);
     return EXIT_FAILURE;
-  }
-
-  if (argc >= 5) {
-    csv_path = argv[4];
-  }
-
-  if (argc >= 6) {
-    pattern_label = argv[5];
   }
 
   output = fopen(argv[1], "wb");
@@ -302,19 +226,6 @@ int main(int argc, char *argv[])
   );
   metrics.max_rss_kb = end_usage.ru_maxrss;
 
-  if (
-    csv_path != NULL &&
-    !receiver_append_metrics(
-      csv_path,
-      scheme,
-      pattern_label,
-      &metrics
-    )
-  ) {
-    perror("receiver: append CSV metrics");
-    goto cleanup;
-  }
-
   printf(
     "Received %zu frame(s): %zu accepted, %zu rejected; "
     "wrote %zu payload byte(s) in %.6f s.\n",
@@ -323,6 +234,17 @@ int main(int argc, char *argv[])
     metrics.frames_rejected,
     metrics.payload_bytes_written,
     metrics.elapsed_seconds
+  );
+  printf(
+    "RECEIVER_METRICS,%zu,%zu,%zu,%zu,%.9f,%.9f,%.9f,%ld\n",
+    metrics.frames_received,
+    metrics.frames_accepted,
+    metrics.frames_rejected,
+    metrics.payload_bytes_written,
+    metrics.elapsed_seconds,
+    metrics.user_cpu_seconds,
+    metrics.system_cpu_seconds,
+    metrics.max_rss_kb
   );
   status = EXIT_SUCCESS;
 

@@ -16,7 +16,7 @@ PATTERNS = ("none", "single", "two", "odd", "burst")
 
 
 def load_summaries(path: Path) -> list[dict[str, str | float | int]]:
-    """Group repeated runs and calculate means and timing variability."""
+    """Group repeated runs and calculate outcome and resource summaries."""
     grouped: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
 
     with path.open(newline="", encoding="utf-8") as source:
@@ -26,16 +26,50 @@ def load_summaries(path: Path) -> list[dict[str, str | float | int]]:
     summaries: list[dict[str, str | float | int]] = []
 
     for (scheme, pattern), rows in grouped.items():
-        times = [float(row["elapsed_seconds"]) for row in rows]
+        times = [float(row["receiver_elapsed_seconds"]) for row in rows]
+        frames_injected = sum(int(row["frames_injected"]) for row in rows)
+        frames_rejected = sum(int(row["frames_rejected"]) for row in rows)
+        undetected_frames = sum(int(row["undetected_frames"]) for row in rows)
         summaries.append(
             {
                 "scheme": scheme,
                 "error_pattern": pattern,
                 "runs": len(rows),
-                "detection_rate": mean(float(row["detection_rate"]) for row in rows),
+                "error_interval": int(rows[0]["error_interval"]),
+                "frames_clean": sum(int(row["frames_clean"]) for row in rows),
+                "frames_injected": frames_injected,
+                "frames_rejected": frames_rejected,
+                "undetected_frames": undetected_frames,
+                "detection_rate": (
+                    frames_rejected / frames_injected
+                    if frames_injected > 0
+                    else 0.0
+                ),
+                "undetected_rate": (
+                    undetected_frames / frames_injected
+                    if frames_injected > 0
+                    else 0.0
+                ),
                 "elapsed_seconds": mean(times),
                 "elapsed_stdev": stdev(times) if len(times) > 1 else 0.0,
-                "max_rss_kb": mean(float(row["max_rss_kb"]) for row in rows),
+                "sender_cpu_seconds": mean(
+                    float(row["sender_user_cpu_seconds"])
+                    + float(row["sender_system_cpu_seconds"])
+                    for row in rows
+                ),
+                "receiver_cpu_seconds": mean(
+                    float(row["receiver_user_cpu_seconds"])
+                    + float(row["receiver_system_cpu_seconds"])
+                    for row in rows
+                ),
+                "sender_max_rss_kb": mean(
+                    float(row["sender_max_rss_kb"]) for row in rows
+                ),
+                "receiver_max_rss_kb": mean(
+                    float(row["receiver_max_rss_kb"]) for row in rows
+                ),
+                "input_bytes": mean(float(row["input_bytes"]) for row in rows),
+                "output_bytes": mean(float(row["output_bytes"]) for row in rows),
             }
         )
 
@@ -86,13 +120,30 @@ def write_undetected_error_matrix(
         for pattern in patterns:
             summary = summary_for(summaries, scheme, pattern)
             if summary is not None:
-                values.append(100.0 * (1.0 - float(summary["detection_rate"])))
+                values.append(100.0 * float(summary["undetected_rate"]))
 
     maximum = max(values, default=0.0)
+    injected_summary = next(
+        (
+            summary
+            for summary in summaries
+            if summary["error_pattern"] != "none"
+        ),
+        None,
+    )
+    context = "Injected-error frames only."
+
+    if injected_summary is not None:
+        context = (
+            f'{float(injected_summary["input_bytes"]) / 1_048_576.0:.2f} MiB input; '
+            f'one in every {int(injected_summary["error_interval"])} frames selected; '
+            f'{int(injected_summary["runs"])} repeats per pattern.'
+        )
+
     elements = svg_document("Mean undetected-frame rate", width, height)
     elements.append(
         '<text x="500" y="62" text-anchor="middle" font-family="sans-serif" '
-        'font-size="14">Injected-error runs only. Exact percentages are shown in every cell.</text>'
+        f'font-size="14">{html.escape(context)}</text>'
     )
 
     for index, pattern in enumerate(patterns):
@@ -111,8 +162,10 @@ def write_undetected_error_matrix(
 
         for column_index, pattern in enumerate(patterns):
             summary = summary_for(summaries, scheme, pattern)
-            value = 0.0 if summary is None else 100.0 * (
-                1.0 - float(summary["detection_rate"])
+            value = (
+                0.0
+                if summary is None
+                else 100.0 * float(summary["undetected_rate"])
             )
             intensity = 0.0 if maximum == 0.0 else value / maximum
             red = int(245 - 35 * intensity)
@@ -141,6 +194,125 @@ def write_undetected_error_matrix(
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
 
+def write_frame_outcomes_chart(
+    summaries: list[dict[str, str | float | int]], output_path: Path
+) -> None:
+    """Write clean, detected-error, and undetected-error frame composition."""
+    width = 960
+    height = 560
+    left = 120
+    right = 45
+    top = 120
+    bottom = 110
+    chart_width = width - left - right
+    chart_height = height - top - bottom
+    colors = {
+        "clean": "#4C78A8",
+        "detected": "#F2A541",
+        "undetected": "#D65F8D",
+    }
+    injected_summary = next(
+        (
+            summary
+            for summary in summaries
+            if summary["error_pattern"] != "none"
+        ),
+        None,
+    )
+    context = "Injected-pattern runs; all error patterns and repeats combined."
+
+    if injected_summary is not None:
+        context = (
+            f'{float(injected_summary["input_bytes"]) / 1_048_576.0:.2f} MiB input; '
+            f'one in every {int(injected_summary["error_interval"])} frames selected; '
+            f'{int(injected_summary["runs"])} repeats per pattern.'
+        )
+
+    elements = svg_document("Frame outcomes in mixed-error trials", width, height)
+    elements.append(
+        '<text x="480" y="62" text-anchor="middle" font-family="sans-serif" '
+        f'font-size="14">{html.escape(context)}</text>'
+    )
+    elements.extend(
+        [
+            '<rect x="255" y="82" width="14" height="14" fill="#4C78A8"/>',
+            '<text x="276" y="94" font-family="sans-serif" font-size="13">Clean</text>',
+            '<rect x="375" y="82" width="14" height="14" fill="#F2A541"/>',
+            '<text x="396" y="94" font-family="sans-serif" font-size="13">Error detected</text>',
+            '<rect x="545" y="82" width="14" height="14" fill="#D65F8D"/>',
+            '<text x="566" y="94" font-family="sans-serif" font-size="13">Error undetected</text>',
+            f'<line x1="{left}" y1="{top}" x2="{left}" y2="{top + chart_height}" stroke="#222"/>',
+            f'<line x1="{left}" y1="{top + chart_height}" x2="{left + chart_width}" '
+            f'y2="{top + chart_height}" stroke="#222"/>',
+        ]
+    )
+
+    for tick in range(6):
+        value = tick * 20
+        y = top + chart_height - chart_height * value / 100.0
+        elements.extend(
+            [
+                f'<line x1="{left}" y1="{y:.1f}" x2="{left + chart_width}" '
+                f'y2="{y:.1f}" stroke="#DDD"/>',
+                f'<text x="{left - 8}" y="{y + 5:.1f}" text-anchor="end" '
+                f'font-family="sans-serif" font-size="12">{value}%</text>',
+            ]
+        )
+
+    bar_space = chart_width / len(SCHEMES)
+    bar_width = bar_space * 0.54
+
+    for index, scheme in enumerate(SCHEMES):
+        scheme_rows = [
+            summary
+            for summary in summaries
+            if summary["scheme"] == scheme and summary["error_pattern"] != "none"
+        ]
+        clean = sum(int(row["frames_clean"]) for row in scheme_rows)
+        detected = sum(int(row["frames_rejected"]) for row in scheme_rows)
+        undetected = sum(int(row["undetected_frames"]) for row in scheme_rows)
+        total = clean + detected + undetected
+        portions = (
+            ("clean", clean),
+            ("detected", detected),
+            ("undetected", undetected),
+        )
+        x = left + index * bar_space + (bar_space - bar_width) / 2
+        current_y = top + chart_height
+
+        for category, count in portions:
+            percentage = 0.0 if total == 0 else 100.0 * count / total
+            segment_height = chart_height * percentage / 100.0
+            current_y -= segment_height
+            elements.append(
+                f'<rect x="{x:.1f}" y="{current_y:.1f}" width="{bar_width:.1f}" '
+                f'height="{segment_height:.1f}" fill="{colors[category]}" stroke="white"/>'
+            )
+
+            if segment_height >= 18.0:
+                elements.append(
+                    f'<text x="{x + bar_width / 2:.1f}" '
+                    f'y="{current_y + segment_height / 2 + 5:.1f}" '
+                    'text-anchor="middle" font-family="sans-serif" font-size="12" '
+                    f'fill="white">{percentage:.1f}%</text>'
+                )
+
+        elements.append(
+            f'<text x="{x + bar_width / 2:.1f}" y="{top + chart_height + 28}" '
+            'text-anchor="middle" font-family="sans-serif" font-size="14">'
+            f'{html.escape(scheme)}</text>'
+        )
+
+    elements.extend(
+        [
+            '<text x="480" y="522" text-anchor="middle" font-family="sans-serif" '
+            'font-size="13">Clean frames remain in the same transfer and provide an internal acceptance control.</text>',
+            "</svg>",
+        ]
+    )
+    output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
+
+
 def write_control_timing_chart(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
@@ -163,10 +335,16 @@ def write_control_timing_chart(
         for row in rows
     )
     maximum = maximum if maximum > 0.0 else 1.0
+    input_mib = (
+        float(rows[0]["input_bytes"]) / 1_048_576.0
+        if rows
+        else 0.0
+    )
+    run_count = int(rows[0]["runs"]) if rows else 0
     elements = svg_document("Receiver time for no-error controls", width, height)
     elements.append(
         '<text x="450" y="62" text-anchor="middle" font-family="sans-serif" '
-        'font-size="14">Mean receiver elapsed time in milliseconds; whiskers show one standard deviation.</text>'
+        f'font-size="14">{input_mib:.2f} MiB input; mean of {run_count} runs; whiskers show one standard deviation.</text>'
     )
     elements.extend(
         [
@@ -231,48 +409,57 @@ def write_control_timing_chart(
 def write_resource_summary(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
-    """Write a table that states whether peak RSS actually differentiates schemes."""
+    """Write sender and receiver CPU and peak-memory control summaries."""
     rows = []
     for scheme in SCHEMES:
-        values = [
-            float(summary["max_rss_kb"])
-            for summary in summaries
-            if summary["scheme"] == scheme
-        ]
-        if values:
-            rows.append((scheme, mean(values)))
+        summary = summary_for(summaries, scheme, "none")
+        if summary is not None:
+            rows.append(summary)
 
-    distinct_values = {round(value, 3) for _, value in rows}
-    width = 720
-    height = 410
-    elements = svg_document("Peak memory summary", width, height)
-    conclusion = (
-        "No observed difference: peak RSS is not a discriminating metric here."
-        if len(distinct_values) <= 1
-        else "Peak RSS differs across schemes in this experiment."
+    width = 980
+    height = 430
+    input_mib = (
+        float(rows[0]["input_bytes"]) / 1_048_576.0
+        if rows
+        else 0.0
     )
+    run_count = int(rows[0]["runs"]) if rows else 0
+    elements = svg_document("Process resource usage for no-error controls", width, height)
     elements.append(
-        f'<text x="360" y="65" text-anchor="middle" font-family="sans-serif" '
-        f'font-size="14">{html.escape(conclusion)}</text>'
+        '<text x="490" y="65" text-anchor="middle" font-family="sans-serif" '
+        f'font-size="14">{input_mib:.2f} MiB input; mean of {run_count} runs; CPU is user plus system time.</text>'
     )
     elements.extend(
         [
-            '<rect x="180" y="100" width="360" height="42" fill="#E8EEF7" stroke="#888"/>',
-            '<text x="250" y="127" text-anchor="middle" font-family="sans-serif" font-size="15">Scheme</text>',
-            '<text x="450" y="127" text-anchor="middle" font-family="sans-serif" font-size="15">Mean peak RSS (KiB)</text>',
+            '<rect x="70" y="100" width="840" height="42" fill="#E8EEF7" stroke="#888"/>',
+            '<text x="135" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Scheme</text>',
+            '<text x="285" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Sender CPU (ms)</text>',
+            '<text x="455" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Receiver CPU (ms)</text>',
+            '<text x="640" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Sender peak RSS (KiB)</text>',
+            '<text x="825" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Receiver peak RSS (KiB)</text>',
         ]
     )
-    for index, (scheme, value) in enumerate(rows):
+    for index, row in enumerate(rows):
         y = 142 + index * 42
         elements.extend(
             [
-                f'<rect x="180" y="{y}" width="360" height="42" fill="white" stroke="#B8B8B8"/>',
-                f'<text x="250" y="{y + 27}" text-anchor="middle" font-family="sans-serif" '
-                f'font-size="15">{html.escape(scheme)}</text>',
-                f'<text x="450" y="{y + 27}" text-anchor="middle" font-family="sans-serif" '
-                f'font-size="15">{value:.0f}</text>',
+                f'<rect x="70" y="{y}" width="840" height="42" fill="white" stroke="#B8B8B8"/>',
+                f'<text x="135" y="{y + 27}" text-anchor="middle" font-family="sans-serif" '
+                f'font-size="14">{html.escape(str(row["scheme"]))}</text>',
+                f'<text x="285" y="{y + 27}" text-anchor="middle" font-family="monospace" '
+                f'font-size="14">{1000.0 * float(row["sender_cpu_seconds"]):.3f}</text>',
+                f'<text x="455" y="{y + 27}" text-anchor="middle" font-family="monospace" '
+                f'font-size="14">{1000.0 * float(row["receiver_cpu_seconds"]):.3f}</text>',
+                f'<text x="640" y="{y + 27}" text-anchor="middle" font-family="monospace" '
+                f'font-size="14">{float(row["sender_max_rss_kb"]):.0f}</text>',
+                f'<text x="825" y="{y + 27}" text-anchor="middle" font-family="monospace" '
+                f'font-size="14">{float(row["receiver_max_rss_kb"]):.0f}</text>',
             ]
         )
+    elements.append(
+        '<text x="490" y="389" text-anchor="middle" font-family="sans-serif" '
+        'font-size="13">RSS values are per-process maxima and must not be added as a measured simultaneous peak.</text>'
+    )
     elements.append("</svg>")
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
@@ -289,8 +476,9 @@ def main() -> None:
     summaries = load_summaries(args.csv_path)
     args.output_directory.mkdir(parents=True, exist_ok=True)
     write_undetected_error_matrix(summaries, args.output_directory / "undetected_rate.svg")
+    write_frame_outcomes_chart(summaries, args.output_directory / "frame_outcomes.svg")
     write_control_timing_chart(summaries, args.output_directory / "execution_time.svg")
-    write_resource_summary(summaries, args.output_directory / "memory_summary.svg")
+    write_resource_summary(summaries, args.output_directory / "resource_usage.svg")
 
 
 if __name__ == "__main__":

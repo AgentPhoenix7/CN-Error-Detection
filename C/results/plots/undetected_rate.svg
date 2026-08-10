@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="470" viewBox="0 0 1000 470">
 <rect width="100%" height="100%" fill="white"/>
 <text x="500.0" y="34" text-anchor="middle" font-family="sans-serif" font-size="24">Mean undetected-frame rate</text>
-<text x="500" y="62" text-anchor="middle" font-family="sans-serif" font-size="14">Injected-error runs only. Exact percentages are shown in every cell.</text>
+<text x="500" y="62" text-anchor="middle" font-family="sans-serif" font-size="14">1.00 MiB input; one in every 2 frames selected; 20 repeats per pattern.</text>
 <text x="282.5" y="103" text-anchor="middle" font-family="sans-serif" font-size="14">single error</text>
 <text x="467.5" y="103" text-anchor="middle" font-family="sans-serif" font-size="14">two error</text>
 <text x="652.5" y="103" text-anchor="middle" font-family="sans-serif" font-size="14">odd error</text>
@@ -13,13 +13,13 @@
 <text x="465.5" y="150" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
 <rect x="560" y="120" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
 <text x="650.5" y="150" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
-<rect x="745" y="120" width="181" height="44" fill="rgb(229,179,179)" stroke="#B8B8B8"/>
-<text x="835.5" y="150" text-anchor="middle" font-family="sans-serif" font-size="15">0.39%</text>
+<rect x="745" y="120" width="181" height="44" fill="rgb(226,163,163)" stroke="#B8B8B8"/>
+<text x="835.5" y="150" text-anchor="middle" font-family="sans-serif" font-size="15">0.47%</text>
 <text x="178" y="199" text-anchor="end" font-family="sans-serif" font-size="15">crc8</text>
 <rect x="190" y="168" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
 <text x="280.5" y="198" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
 <rect x="375" y="168" width="181" height="44" fill="rgb(210,95,95)" stroke="#B8B8B8"/>
-<text x="465.5" y="198" text-anchor="middle" font-family="sans-serif" font-size="15">0.90%</text>
+<text x="465.5" y="198" text-anchor="middle" font-family="sans-serif" font-size="15">0.87%</text>
 <rect x="560" y="168" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
 <text x="650.5" y="198" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
 <rect x="745" y="168" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
@@ -27,8 +27,8 @@
 <text x="178" y="247" text-anchor="end" font-family="sans-serif" font-size="15">crc10</text>
 <rect x="190" y="216" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
 <text x="280.5" y="246" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
-<rect x="375" y="216" width="181" height="44" fill="rgb(238,216,216)" stroke="#B8B8B8"/>
-<text x="465.5" y="246" text-anchor="middle" font-family="sans-serif" font-size="15">0.17%</text>
+<rect x="375" y="216" width="181" height="44" fill="rgb(238,217,217)" stroke="#B8B8B8"/>
+<text x="465.5" y="246" text-anchor="middle" font-family="sans-serif" font-size="15">0.16%</text>
 <rect x="560" y="216" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
 <text x="650.5" y="246" text-anchor="middle" font-family="sans-serif" font-size="15">0.00%</text>
 <rect x="745" y="216" width="181" height="44" fill="rgb(245,245,245)" stroke="#B8B8B8"/>
