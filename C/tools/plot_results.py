@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import html
+import math
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
@@ -197,15 +198,13 @@ def write_undetected_error_matrix(
 def write_frame_outcomes_chart(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
-    """Write clean, detected-error, and undetected-error frame composition."""
-    width = 960
-    height = 560
-    left = 120
-    right = 45
-    top = 120
-    bottom = 110
-    chart_width = width - left - right
-    chart_height = height - top - bottom
+    """Write full composition plus a focused view of rare undetected errors."""
+    width = 1200
+    height = 600
+    left = 90
+    top = 165
+    chart_width = 580
+    chart_height = 315
     colors = {
         "clean": "#4C78A8",
         "detected": "#F2A541",
@@ -228,19 +227,43 @@ def write_frame_outcomes_chart(
             f'{int(injected_summary["runs"])} repeats per pattern.'
         )
 
+    outcomes: list[tuple[str, int, int, int]] = []
+
+    for scheme in SCHEMES:
+        scheme_rows = [
+            summary
+            for summary in summaries
+            if summary["scheme"] == scheme and summary["error_pattern"] != "none"
+        ]
+        outcomes.append(
+            (
+                scheme,
+                sum(int(row["frames_clean"]) for row in scheme_rows),
+                sum(int(row["frames_rejected"]) for row in scheme_rows),
+                sum(int(row["undetected_frames"]) for row in scheme_rows),
+            )
+        )
+
     elements = svg_document("Frame outcomes in mixed-error trials", width, height)
     elements.append(
-        '<text x="480" y="62" text-anchor="middle" font-family="sans-serif" '
+        '<text x="600" y="62" text-anchor="middle" font-family="sans-serif" '
         f'font-size="14">{html.escape(context)}</text>'
     )
     elements.extend(
         [
-            '<rect x="255" y="82" width="14" height="14" fill="#4C78A8"/>',
-            '<text x="276" y="94" font-family="sans-serif" font-size="13">Clean</text>',
-            '<rect x="375" y="82" width="14" height="14" fill="#F2A541"/>',
-            '<text x="396" y="94" font-family="sans-serif" font-size="13">Error detected</text>',
-            '<rect x="545" y="82" width="14" height="14" fill="#D65F8D"/>',
-            '<text x="566" y="94" font-family="sans-serif" font-size="13">Error undetected</text>',
+            '<text x="380" y="99" text-anchor="middle" font-family="sans-serif" '
+            'font-size="17" font-weight="bold">All transmitted frames</text>',
+            '<text x="955" y="99" text-anchor="middle" font-family="sans-serif" '
+            'font-size="17" font-weight="bold">Undetected among injected frames</text>',
+            '<text x="955" y="123" text-anchor="middle" font-family="sans-serif" '
+            'font-size="13">Focused scale; exact counts and rates shown</text>',
+            '<rect x="165" y="117" width="14" height="14" fill="#4C78A8"/>',
+            '<text x="186" y="129" font-family="sans-serif" font-size="13">Clean</text>',
+            '<rect x="285" y="117" width="14" height="14" fill="#F2A541"/>',
+            '<text x="306" y="129" font-family="sans-serif" font-size="13">Error detected</text>',
+            '<rect x="455" y="117" width="14" height="14" fill="#D65F8D"/>',
+            '<text x="476" y="129" font-family="sans-serif" font-size="13">Error undetected</text>',
+            '<line x1="710" y1="88" x2="710" y2="520" stroke="#D0D0D0"/>',
             f'<line x1="{left}" y1="{top}" x2="{left}" y2="{top + chart_height}" stroke="#222"/>',
             f'<line x1="{left}" y1="{top + chart_height}" x2="{left + chart_width}" '
             f'y2="{top + chart_height}" stroke="#222"/>',
@@ -259,18 +282,10 @@ def write_frame_outcomes_chart(
             ]
         )
 
-    bar_space = chart_width / len(SCHEMES)
+    bar_space = chart_width / len(outcomes)
     bar_width = bar_space * 0.54
 
-    for index, scheme in enumerate(SCHEMES):
-        scheme_rows = [
-            summary
-            for summary in summaries
-            if summary["scheme"] == scheme and summary["error_pattern"] != "none"
-        ]
-        clean = sum(int(row["frames_clean"]) for row in scheme_rows)
-        detected = sum(int(row["frames_rejected"]) for row in scheme_rows)
-        undetected = sum(int(row["undetected_frames"]) for row in scheme_rows)
+    for index, (scheme, clean, detected, undetected) in enumerate(outcomes):
         total = clean + detected + undetected
         portions = (
             ("clean", clean),
@@ -302,11 +317,80 @@ def write_frame_outcomes_chart(
             'text-anchor="middle" font-family="sans-serif" font-size="14">'
             f'{html.escape(scheme)}</text>'
         )
+        elements.append(
+            f'<text x="{x + bar_width / 2:.1f}" y="{top - 10}" '
+            'text-anchor="middle" font-family="sans-serif" font-size="12" '
+            f'fill="#9E365F">{undetected:,} missed</text>'
+        )
+
+    focused_rates = [
+        100.0 * undetected / (detected + undetected)
+        if detected + undetected > 0
+        else 0.0
+        for _, _, detected, undetected in outcomes
+    ]
+    focused_maximum = max(focused_rates, default=0.0)
+
+    if focused_maximum == 0.0:
+        focused_maximum = 0.1
+    else:
+        rounded_maximum = math.ceil(focused_maximum * 10.0) / 10.0
+        focused_maximum = (
+            rounded_maximum + 0.1
+            if rounded_maximum <= focused_maximum
+            else rounded_maximum
+        )
+
+    focused_left = 805
+    focused_width = 315
+    focused_top = 165
+    focused_spacing = 58
+
+    for tick in range(3):
+        value = focused_maximum * tick / 2.0
+        x = focused_left + focused_width * tick / 2.0
+        elements.extend(
+            [
+                f'<line x1="{x:.1f}" y1="{focused_top - 10}" x2="{x:.1f}" '
+                'y2="470" stroke="#E0E0E0"/>',
+                f'<text x="{x:.1f}" y="491" text-anchor="middle" '
+                f'font-family="sans-serif" font-size="12">{value:.2f}%</text>',
+            ]
+        )
+
+    elements.append(
+        f'<line x1="{focused_left}" y1="470" '
+        f'x2="{focused_left + focused_width}" y2="470" stroke="#222"/>'
+    )
+
+    for index, ((scheme, _, detected, undetected), rate) in enumerate(
+        zip(outcomes, focused_rates, strict=True)
+    ):
+        injected = detected + undetected
+        y = focused_top + index * focused_spacing
+        bar_width_focused = focused_width * rate / focused_maximum
+        elements.extend(
+            [
+                f'<text x="{focused_left - 12}" y="{y + 16}" text-anchor="end" '
+                f'font-family="sans-serif" font-size="14">{html.escape(scheme)}</text>',
+                f'<rect x="{focused_left}" y="{y}" width="{bar_width_focused:.1f}" '
+                'height="19" fill="#D65F8D" stroke="#9E365F"/>',
+                f'<text x="{focused_left + focused_width}" y="{y + 40}" '
+                'text-anchor="end" font-family="monospace" font-size="12" '
+                f'fill="#4A2635">{undetected:,} / {injected:,} ({rate:.3f}%)</text>',
+            ]
+        )
+
+        if rate == 0.0:
+            elements.append(
+                f'<circle cx="{focused_left}" cy="{y + 9.5}" r="4" '
+                'fill="white" stroke="#9E365F" stroke-width="2"/>'
+            )
 
     elements.extend(
         [
-            '<text x="480" y="522" text-anchor="middle" font-family="sans-serif" '
-            'font-size="13">Clean frames remain in the same transfer and provide an internal acceptance control.</text>',
+            '<text x="600" y="555" text-anchor="middle" font-family="sans-serif" '
+            'font-size="13">Left: share of all transmitted frames. Right: undetected errors divided by injected frames; focused scale starts at zero.</text>',
             "</svg>",
         ]
     )
