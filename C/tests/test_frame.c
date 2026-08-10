@@ -45,7 +45,12 @@ static int test_serialize_header(void)
     return 1;
   }
 
-  for (index = 0U; index < FRAME_HEADER_SIZE; index++) {
+  for (
+    index = 0U;
+    index < FRAME_HEADER_SIZE;
+    index++
+  )
+  {
     if (serialized_header[index] != expected[index]) {
       fprintf(
         stderr,
@@ -109,7 +114,12 @@ static int test_reject_null_header(void)
     return 1;
   }
 
-  for (index = 0U; index < FRAME_HEADER_SIZE; index++) {
+  for (
+    index = 0U;
+    index < FRAME_HEADER_SIZE;
+    index++
+  )
+  {
     if (serialized_header[index] != sentinel) {
       fputs("FAIL: null frame header modified output\n", stderr);
       return 1;
@@ -161,7 +171,12 @@ static int test_reject_oversized_payload_length(void)
     return 1;
   }
 
-  for (index = 0U; index < FRAME_HEADER_SIZE; index++) {
+  for (
+    index = 0U;
+    index < FRAME_HEADER_SIZE;
+    index++
+  )
+  {
     if (serialized_header[index] != sentinel) {
       fputs("FAIL: oversized payload length modified output\n", stderr);
       return 1;
@@ -259,7 +274,12 @@ static int test_frame_size_calculations(void)
   size_t frame_size;
   size_t index;
 
-  for (index = 0U; index < sizeof schemes / sizeof schemes[0]; index++) {
+  for (
+    index = 0U;
+    index < sizeof schemes / sizeof schemes[0];
+    index++
+  )
+  {
     if (
       !frame_fcs_size(schemes[index], &fcs_size) ||
       fcs_size != expected_fcs_sizes[index] ||
@@ -366,7 +386,12 @@ static int test_serialize_fcs_wire_formats(void)
   size_t padded_length;
   size_t index;
 
-  for (index = 0U; index < sizeof schemes / sizeof schemes[0]; index++) {
+  for (
+    index = 0U;
+    index < sizeof schemes / sizeof schemes[0];
+    index++
+  )
+  {
     if (
       !frame_padded_payload_length(
         header.payload_length,
@@ -423,7 +448,12 @@ static int test_verify_all_frame_schemes(void)
   size_t extracted_length;
   size_t index;
 
-  for (index = 0U; index < sizeof schemes / sizeof schemes[0]; index++) {
+  for (
+    index = 0U;
+    index < sizeof schemes / sizeof schemes[0];
+    index++
+  )
+  {
     if (
       !frame_serialize(
         &header,
@@ -612,7 +642,12 @@ static int test_parse_fcs_scheme_names(void)
   };
   size_t index;
 
-  for (index = 0U; index < sizeof names / sizeof names[0]; index++) {
+  for (
+    index = 0U;
+    index < sizeof names / sizeof names[0];
+    index++
+  )
+  {
     frame_fcs_scheme_t scheme;
 
     if (

@@ -54,8 +54,18 @@ uint32_t crc_compute(
 
   top_bit_mask = UINT32_C(1) << (parameters->width - 1U);
 
-  for (byte_index = 0U; byte_index < length; byte_index++) {
-    for (bit_index = 0U; bit_index < 8U; bit_index++) {
+  for (
+    byte_index = 0U;
+    byte_index < length;
+    byte_index++
+  )
+  {
+    for (
+      bit_index = 0U;
+      bit_index < 8U;
+      bit_index++
+    )
+    {
       bool data_bit_set;
       bool top_bit_set;
 

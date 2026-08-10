@@ -219,7 +219,11 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
-  for (;;) {
+  for (
+    ;
+    ;
+  )
+  {
     receive_result = socket_utils_receive_all(
       client,
       length_prefix,

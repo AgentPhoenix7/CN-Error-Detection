@@ -286,7 +286,12 @@ bool error_injection_flip_odd_bits(
     return false;
   }
 
-  for (index = 0U; index < bit_count; index++) {
+  for (
+    index = 0U;
+    index < bit_count;
+    index++
+  )
+  {
     if (bit_indices[index] / 8U >= length) {
       return false;
     }
@@ -302,7 +307,12 @@ bool error_injection_flip_odd_bits(
     }
   }
 
-  for (index = 0U; index < bit_count; index++) {
+  for (
+    index = 0U;
+    index < bit_count;
+    index++
+  )
+  {
     (void)error_injection_flip_bit(
       data,
       length,
@@ -338,7 +348,12 @@ bool error_injection_flip_burst(
     return false;
   }
 
-  for (offset = 0U; offset < burst_length; offset++) {
+  for (
+    offset = 0U;
+    offset < burst_length;
+    offset++
+  )
+  {
     (void)error_injection_flip_bit(
       data,
       length,

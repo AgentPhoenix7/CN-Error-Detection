@@ -63,7 +63,12 @@ static bool frame_padding_is_zero(
 {
   size_t index;
 
-  for (index = payload_length; index < padded_length; index++) {
+  for (
+    index = payload_length;
+    index < padded_length;
+    index++
+  )
+  {
     if (payload[index] != 0U) {
       return false;
     }

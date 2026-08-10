@@ -45,7 +45,12 @@ int socket_utils_connect(const char *host, uint16_t port)
     return -1;
   }
 
-  for (address = addresses; address != NULL; address = address->ai_next) {
+  for (
+    address = addresses;
+    address != NULL;
+    address = address->ai_next
+  )
+  {
     socket_fd = socket(
       address->ai_family,
       address->ai_socktype,
@@ -94,7 +99,12 @@ int socket_utils_listen(uint16_t port, int backlog)
     return -1;
   }
 
-  for (address = addresses; address != NULL; address = address->ai_next) {
+  for (
+    address = addresses;
+    address != NULL;
+    address = address->ai_next
+  )
+  {
     listener = socket(
       address->ai_family,
       address->ai_socktype,
