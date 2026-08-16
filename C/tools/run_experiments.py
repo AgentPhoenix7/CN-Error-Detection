@@ -304,7 +304,10 @@ def parse_args() -> argparse.Namespace:
         "--error-interval",
         type=int,
         default=2,
-        help="inject the selected error into every Nth frame (default: 2)",
+        help=(
+            "select each frame reproducibly with probability 1/N for error "
+            "injection (default: 2)"
+        ),
     )
     parser.add_argument(
         "--append",
@@ -327,7 +330,7 @@ def open_results(path: Path, append: bool) -> tuple[object, csv.DictWriter]:
 
     mode = "a" if append else "w"
     output = path.open(mode, newline="", encoding="utf-8")
-    writer = csv.DictWriter(output, fieldnames=CSV_FIELDS)
+    writer = csv.DictWriter(output, fieldnames=CSV_FIELDS, lineterminator="\n")
 
     if not append or path.stat().st_size == 0:
         writer.writeheader()

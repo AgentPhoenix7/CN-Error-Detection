@@ -77,8 +77,10 @@ The odd-weight guarantee follows from the factor `(x + 1)`, which is present in
 the CRC-8, CRC-10, and CRC-16 generator polynomials but not CRC-32. For this
 frame-size range, CRC-8 and CRC-10 can miss some two-bit separations, while the
 chosen CRC-16 and CRC-32 polynomials detect every two-bit separation that fits
-in a maximum-sized simulated frame. These statements describe the exact
-polynomials and non-reflected convention implemented here.
+in a maximum-sized simulated frame. The relevant two-bit recurrence orders are
+93 for CRC-8, 511 for CRC-10, and 32,767 for CRC-16; CRC-32's order also exceeds
+the 12,144-bit maximum frame. These statements describe the exact polynomials
+and non-reflected convention implemented here.
 
 ### 3.3 Seeded mixed-frame selection
 

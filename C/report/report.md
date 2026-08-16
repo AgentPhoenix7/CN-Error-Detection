@@ -17,7 +17,7 @@ then uses separate clean controls for timing and resource comparisons.
 
 The validated campaign contains **450 runs**. Each scheme and injected pattern uses 20 repeats of the 1.00 MiB detection input. Each scheme also uses 10 clean repeats of the 8.00 MiB performance input. For injected runs, each frame is selected reproducibly with probability 1/2; the recorded clean and injected counts are observed outcomes, not assumed quotas.
 
-Observed undetected frames were Checksum 16-bit burst: 33 of 7,000; CRC-8 two-bit: 61 of 7,000; CRC-10 two-bit: 11 of 7,000.
+Observed undetected frames were Checksum 16-bit burst: 33 of 7,055; CRC-8 two-bit: 60 of 7,055; CRC-10 two-bit: 11 of 7,055.
 
 The empirical results are evidence for this input and these reproducible seeds;
 they do not replace the mathematical guarantees of each code. Timing is measured
@@ -85,8 +85,10 @@ The odd-weight guarantee follows from the factor `(x + 1)`, which is present in
 the CRC-8, CRC-10, and CRC-16 generator polynomials but not CRC-32. For this
 frame-size range, CRC-8 and CRC-10 can miss some two-bit separations, while the
 chosen CRC-16 and CRC-32 polynomials detect every two-bit separation that fits
-in a maximum-sized simulated frame. These statements describe the exact
-polynomials and non-reflected convention implemented here.
+in a maximum-sized simulated frame. The relevant two-bit recurrence orders are
+93 for CRC-8, 511 for CRC-10, and 32,767 for CRC-16; CRC-32's order also exceeds
+the 12,144-bit maximum frame. These statements describe the exact polynomials
+and non-reflected convention implemented here.
 
 ### 3.3 Seeded mixed-frame selection
 
@@ -135,11 +137,11 @@ fixed half-frame quotas.
 
 | Scheme | Clean | Injected | Detected | Undetected | Detection rate |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Checksum | 27,920 | 28,000 | 27,967 | 33 | 99.8821% |
-| CRC-8 | 27,920 | 28,000 | 27,939 | 61 | 99.7821% |
-| CRC-10 | 27,920 | 28,000 | 27,989 | 11 | 99.9607% |
-| CRC-16 | 27,920 | 28,000 | 28,000 | 0 | 100.0000% |
-| CRC-32 | 28,000 | 28,000 | 28,000 | 0 | 100.0000% |
+| Checksum | 27,700 | 28,220 | 28,187 | 33 | 99.8831% |
+| CRC-8 | 27,700 | 28,220 | 28,160 | 60 | 99.7874% |
+| CRC-10 | 27,700 | 28,220 | 28,209 | 11 | 99.9610% |
+| CRC-16 | 27,700 | 28,220 | 28,220 | 0 | 100.0000% |
+| CRC-32 | 27,736 | 28,264 | 28,264 | 0 | 100.0000% |
 
 ![Frame outcomes](../results/plots/frame_outcomes.svg)
 
@@ -150,11 +152,11 @@ campaign observed no miss, not that the theoretical miss probability is zero.
 
 | Scheme | single-bit | two-bit | odd three-bit | 16-bit burst |
 | --- | ---: | ---: | ---: | ---: |
-| Checksum | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 33 / 7,000 (0.4714%) |
-| CRC-8 | 0 / 7,000 (0.0000%) | 61 / 7,000 (0.8714%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) |
-| CRC-10 | 0 / 7,000 (0.0000%) | 11 / 7,000 (0.1571%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) |
-| CRC-16 | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) |
-| CRC-32 | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) | 0 / 7,000 (0.0000%) |
+| Checksum | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) | 33 / 7,055 (0.4678%) |
+| CRC-8 | 0 / 7,055 (0.0000%) | 60 / 7,055 (0.8505%) | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) |
+| CRC-10 | 0 / 7,055 (0.0000%) | 11 / 7,055 (0.1559%) | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) |
+| CRC-16 | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) | 0 / 7,055 (0.0000%) |
+| CRC-32 | 0 / 7,066 (0.0000%) | 0 / 7,066 (0.0000%) | 0 / 7,066 (0.0000%) | 0 / 7,066 (0.0000%) |
 
 ![Undetected error rate](../results/plots/undetected_rate.svg)
 
@@ -167,9 +169,9 @@ outcome.
 
 | Required case | Pattern | CRC | Trials | Checksum detected | CRC detected | Case count |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| Both detect | single | CRC-16 | 7,000 | 7,000 | 7,000 | 7,000 |
-| Checksum only | two | CRC-10 | 7,000 | 7,000 | 6,989 | 11 |
-| CRC only | burst | CRC-16 | 7,000 | 6,967 | 7,000 | 33 |
+| Both detect | single | CRC-16 | 7,055 | 7,055 | 7,055 | 7,055 |
+| Checksum only | two | CRC-10 | 7,055 | 7,055 | 7,044 | 11 |
+| CRC only | burst | CRC-16 | 7,055 | 7,022 | 7,055 | 33 |
 
 In addition, `tests/test_evaluation.c` pins one deterministic byte-level fixture
 for each case: both checksum and CRC-16 detect a single-bit flip; checksum
@@ -184,11 +186,11 @@ runs that wrote all payloads and runs that rejected corrupted frames.
 
 | Scheme | Sender mean (ms) | Receiver mean (ms) | Receiver SD (ms) |
 | --- | ---: | ---: | ---: |
-| Checksum | 20.988 | 27.993 | 2.298 |
-| CRC-8 | 710.777 | 761.735 | 51.524 |
-| CRC-10 | 804.938 | 862.655 | 45.012 |
-| CRC-16 | 817.484 | 872.789 | 53.275 |
-| CRC-32 | 806.507 | 864.456 | 80.883 |
+| Checksum | 34.752 | 45.855 | 15.241 |
+| CRC-8 | 946.631 | 974.383 | 77.455 |
+| CRC-10 | 1019.362 | 1066.736 | 79.384 |
+| CRC-16 | 1081.074 | 1140.787 | 110.116 |
+| CRC-32 | 1040.190 | 1102.461 | 150.483 |
 
 ![Execution time](../results/plots/execution_time.svg)
 
@@ -198,11 +200,11 @@ CPU time and peak RSS are reported separately for sender and receiver.
 
 | Scheme | Sender CPU (ms) | Receiver CPU (ms) | Sender peak RSS (KiB) | Receiver peak RSS (KiB) |
 | --- | ---: | ---: | ---: | ---: |
-| Checksum | 20.703 | 27.682 | 20072 | 20072 |
-| CRC-8 | 710.741 | 759.442 | 20098 | 20098 |
-| CRC-10 | 804.908 | 859.945 | 20111 | 20111 |
-| CRC-16 | 817.400 | 870.209 | 20123 | 20123 |
-| CRC-32 | 806.487 | 861.739 | 20123 | 20123 |
+| Checksum | 33.937 | 45.288 | 20018 | 20018 |
+| CRC-8 | 946.587 | 967.739 | 20043 | 20043 |
+| CRC-10 | 1019.337 | 1062.232 | 20056 | 20056 |
+| CRC-16 | 1081.037 | 1136.404 | 20056 | 20056 |
+| CRC-32 | 1040.150 | 1097.181 | 20056 | 20056 |
 
 ![Process resource usage](../results/plots/resource_usage.svg)
 

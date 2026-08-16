@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
 <rect width="100%" height="100%" fill="white"/>
 <text x="600.0" y="34" text-anchor="middle" font-family="sans-serif" font-size="24">Frame outcomes in mixed-error trials</text>
-<text x="600" y="62" text-anchor="middle" font-family="sans-serif" font-size="14">1.00 MiB input; one in every 2 frames selected; 20 repeats per pattern.</text>
+<text x="600" y="62" text-anchor="middle" font-family="sans-serif" font-size="14">1.00 MiB input; seeded selection probability 1/2; 20 repeats per pattern.</text>
 <text x="380" y="99" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">All transmitted frames</text>
 <text x="955" y="99" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">Undetected among injected frames</text>
 <text x="955" y="123" text-anchor="middle" font-family="sans-serif" font-size="13">Focused scale; exact counts and rates shown</text>
@@ -26,38 +26,38 @@
 <text x="82" y="233.0" text-anchor="end" font-family="sans-serif" font-size="12">80%</text>
 <line x1="90" y1="165.0" x2="670" y2="165.0" stroke="#DDD"/>
 <text x="82" y="170.0" text-anchor="end" font-family="sans-serif" font-size="12">100%</text>
-<rect x="116.7" y="322.7" width="62.6" height="157.3" fill="#4C78A8" stroke="white"/>
-<text x="148.0" y="406.4" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.9%</text>
-<rect x="116.7" y="165.2" width="62.6" height="157.5" fill="#F2A541" stroke="white"/>
-<text x="148.0" y="249.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.0%</text>
+<rect x="116.7" y="324.0" width="62.6" height="156.0" fill="#4C78A8" stroke="white"/>
+<text x="148.0" y="407.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.5%</text>
+<rect x="116.7" y="165.2" width="62.6" height="158.8" fill="#F2A541" stroke="white"/>
+<text x="148.0" y="249.6" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.4%</text>
 <rect x="116.7" y="165.0" width="62.6" height="0.2" fill="#D65F8D" stroke="white"/>
 <text x="148.0" y="508" text-anchor="middle" font-family="sans-serif" font-size="14">checksum</text>
 <text x="148.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">33 missed</text>
-<rect x="232.7" y="322.7" width="62.6" height="157.3" fill="#4C78A8" stroke="white"/>
-<text x="264.0" y="406.4" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.9%</text>
-<rect x="232.7" y="165.3" width="62.6" height="157.4" fill="#F2A541" stroke="white"/>
-<text x="264.0" y="249.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.0%</text>
+<rect x="232.7" y="324.0" width="62.6" height="156.0" fill="#4C78A8" stroke="white"/>
+<text x="264.0" y="407.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.5%</text>
+<rect x="232.7" y="165.3" width="62.6" height="158.6" fill="#F2A541" stroke="white"/>
+<text x="264.0" y="249.7" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.4%</text>
 <rect x="232.7" y="165.0" width="62.6" height="0.3" fill="#D65F8D" stroke="white"/>
 <text x="264.0" y="508" text-anchor="middle" font-family="sans-serif" font-size="14">crc8</text>
-<text x="264.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">61 missed</text>
-<rect x="348.7" y="322.7" width="62.6" height="157.3" fill="#4C78A8" stroke="white"/>
-<text x="380.0" y="406.4" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.9%</text>
-<rect x="348.7" y="165.1" width="62.6" height="157.7" fill="#F2A541" stroke="white"/>
-<text x="380.0" y="248.9" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.1%</text>
+<text x="264.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">60 missed</text>
+<rect x="348.7" y="324.0" width="62.6" height="156.0" fill="#4C78A8" stroke="white"/>
+<text x="380.0" y="407.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.5%</text>
+<rect x="348.7" y="165.1" width="62.6" height="158.9" fill="#F2A541" stroke="white"/>
+<text x="380.0" y="249.5" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.4%</text>
 <rect x="348.7" y="165.0" width="62.6" height="0.1" fill="#D65F8D" stroke="white"/>
 <text x="380.0" y="508" text-anchor="middle" font-family="sans-serif" font-size="14">crc10</text>
 <text x="380.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">11 missed</text>
-<rect x="464.7" y="322.7" width="62.6" height="157.3" fill="#4C78A8" stroke="white"/>
-<text x="496.0" y="406.4" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.9%</text>
-<rect x="464.7" y="165.0" width="62.6" height="157.7" fill="#F2A541" stroke="white"/>
-<text x="496.0" y="248.9" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.1%</text>
+<rect x="464.7" y="324.0" width="62.6" height="156.0" fill="#4C78A8" stroke="white"/>
+<text x="496.0" y="407.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.5%</text>
+<rect x="464.7" y="165.0" width="62.6" height="159.0" fill="#F2A541" stroke="white"/>
+<text x="496.0" y="249.5" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.5%</text>
 <rect x="464.7" y="165.0" width="62.6" height="0.0" fill="#D65F8D" stroke="white"/>
 <text x="496.0" y="508" text-anchor="middle" font-family="sans-serif" font-size="14">crc16</text>
 <text x="496.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">0 missed</text>
-<rect x="580.7" y="322.5" width="62.6" height="157.5" fill="#4C78A8" stroke="white"/>
-<text x="612.0" y="406.2" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.0%</text>
-<rect x="580.7" y="165.0" width="62.6" height="157.5" fill="#F2A541" stroke="white"/>
-<text x="612.0" y="248.8" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.0%</text>
+<rect x="580.7" y="324.0" width="62.6" height="156.0" fill="#4C78A8" stroke="white"/>
+<text x="612.0" y="407.0" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">49.5%</text>
+<rect x="580.7" y="165.0" width="62.6" height="159.0" fill="#F2A541" stroke="white"/>
+<text x="612.0" y="249.5" text-anchor="middle" font-family="sans-serif" font-size="12" fill="white">50.5%</text>
 <rect x="580.7" y="165.0" width="62.6" height="0.0" fill="#D65F8D" stroke="white"/>
 <text x="612.0" y="508" text-anchor="middle" font-family="sans-serif" font-size="14">crc32</text>
 <text x="612.0" y="155" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9E365F">0 missed</text>
@@ -69,21 +69,21 @@
 <text x="1120.0" y="491" text-anchor="middle" font-family="sans-serif" font-size="12">0.30%</text>
 <line x1="805" y1="470" x2="1120" y2="470" stroke="#222"/>
 <text x="793" y="181" text-anchor="end" font-family="sans-serif" font-size="14">checksum</text>
-<rect x="805" y="165" width="123.8" height="19" fill="#D65F8D" stroke="#9E365F"/>
-<text x="1120" y="205" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">33 / 28,000 (0.118%)</text>
+<rect x="805" y="165" width="122.8" height="19" fill="#D65F8D" stroke="#9E365F"/>
+<text x="1120" y="205" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">33 / 28,220 (0.117%)</text>
 <text x="793" y="239" text-anchor="end" font-family="sans-serif" font-size="14">crc8</text>
-<rect x="805" y="223" width="228.8" height="19" fill="#D65F8D" stroke="#9E365F"/>
-<text x="1120" y="263" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">61 / 28,000 (0.218%)</text>
+<rect x="805" y="223" width="223.2" height="19" fill="#D65F8D" stroke="#9E365F"/>
+<text x="1120" y="263" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">60 / 28,220 (0.213%)</text>
 <text x="793" y="297" text-anchor="end" font-family="sans-serif" font-size="14">crc10</text>
-<rect x="805" y="281" width="41.2" height="19" fill="#D65F8D" stroke="#9E365F"/>
-<text x="1120" y="321" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">11 / 28,000 (0.039%)</text>
+<rect x="805" y="281" width="40.9" height="19" fill="#D65F8D" stroke="#9E365F"/>
+<text x="1120" y="321" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">11 / 28,220 (0.039%)</text>
 <text x="793" y="355" text-anchor="end" font-family="sans-serif" font-size="14">crc16</text>
 <rect x="805" y="339" width="0.0" height="19" fill="#D65F8D" stroke="#9E365F"/>
-<text x="1120" y="379" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">0 / 28,000 (0.000%)</text>
+<text x="1120" y="379" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">0 / 28,220 (0.000%)</text>
 <circle cx="805" cy="348.5" r="4" fill="white" stroke="#9E365F" stroke-width="2"/>
 <text x="793" y="413" text-anchor="end" font-family="sans-serif" font-size="14">crc32</text>
 <rect x="805" y="397" width="0.0" height="19" fill="#D65F8D" stroke="#9E365F"/>
-<text x="1120" y="437" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">0 / 28,000 (0.000%)</text>
+<text x="1120" y="437" text-anchor="end" font-family="monospace" font-size="12" fill="#4A2635">0 / 28,264 (0.000%)</text>
 <circle cx="805" cy="406.5" r="4" fill="white" stroke="#9E365F" stroke-width="2"/>
 <text x="600" y="555" text-anchor="middle" font-family="sans-serif" font-size="13">Left: share of all transmitted frames. Right: undetected errors divided by injected frames; focused scale starts at zero.</text>
 </svg>

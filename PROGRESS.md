@@ -63,10 +63,13 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - FCS sizes: checksum 2, CRC-8 1, CRC-10 2, CRC-16 2, CRC-32 4 bytes.
 - Final incomplete data is zero-padded. Its header preserves the true payload
   length so binary files that legitimately end in zero bytes remain unambiguous.
-- Injected-pattern transfers select frame index zero and then one frame per
-  configurable positive error interval. The default interval is two, leaving
-  approximately half the frames clean in the same transfer. `none` remains a
-  fully clean, byte-for-byte control.
+- Injected-pattern transfers independently and reproducibly select each frame
+  with probability `1 / ERROR_INTERVAL`. The compatibility name remains in the
+  CLI and CSV. The default denominator is two, and `none` remains a fully clean,
+  byte-for-byte control.
+- Frame selection and error-position choices use separate seeded generators;
+  the selection seed is the run seed XOR `0x9E3779B9`. A denominator of one
+  selects every frame without advancing the selection generator.
 - Controlled error functions use deterministic bit positions. Random selectors
   use caller-seeded state, and the two-isolated-bit pattern chooses
   nonadjacent positions.
@@ -89,7 +92,7 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   error-injection, and frame test binaries.
 - Make targets include `all`, `test`, every module-specific test,
   `test_end_to_end`, `test_mixed_end_to_end`, header checks, fixture
-  generation, experiments, plots, and `clean`.
+  generation, experiments, `plots`, `report`, `results`, and `clean`.
 - `C/pyproject.toml` and `C/uv.lock` define the Python tool environment.
 - `generate_test_data.py` recreates deterministic empty, text, maximum-payload,
   and multi-frame fixtures.
@@ -128,6 +131,9 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   and atomic rejection without partial mutation.
 - `error_injection_rng_t` stores fixed-width state for reproducible
   pseudo-random error selection.
+- `error_injection_select_frame()` maps one generator value to a scaled
+  denominator-sized bucket. Tests pin its seeded sequence, denominator-one
+  behavior, and atomic rejection of invalid input.
 - `error_injection_rng_seed()` initializes caller-owned state, accepts every
   `uint32_t` seed including zero, and safely rejects a null state pointer.
 - `error_injection_flip_random_bit()` advances the fixed generator, maps the
@@ -188,9 +194,9 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - Five permanent socket tests cover exact byte transfer, clean EOF, partial
   record rejection, zero-length operations, and invalid inputs.
 - `sender` reads input in payload-sized chunks, builds sequenced frames,
-  applies the selected seeded error pattern only at the configured interval
-  after calculating the FCS, and reports clean/injected counts plus its own
-  elapsed time, CPU time, and peak RSS.
+  independently selects each frame with the configured seeded probability,
+  applies the selected error pattern after calculating the FCS, and reports
+  clean/injected counts plus its own elapsed time, CPU time, and peak RSS.
 - `receiver` validates complete records, writes only accepted unpadded payload,
   and reports accepted/rejected counts plus its own elapsed time, CPU time,
   and peak RSS.
@@ -208,18 +214,27 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - `plot_results.py` uses only the Python standard library to aggregate repeats
   and produce mixed-frame outcome, undetected-rate, execution-time, and
   sender/receiver resource SVGs.
-- `C/results/experiments_mixed.csv` contains a 75-run large-text pilot: three
-  repeats of four mixed error patterns on 1 MiB and three no-error resource
+- `C/results/experiments_mixed.csv` contains the final 450-run campaign: 20
+  repeats of four mixed error patterns on 1 MiB and 10 no-error resource
   controls on 8 MiB for all five schemes.
-- The pilot kept about half of injected-pattern frames clean. Observed misses
-  were four checksum burst frames, twelve CRC-8 two-bit frames, and one CRC-10
-  two-bit frame; CRC-16 and CRC-32 had no observed misses in this sample.
+- The seeded probability-one-half campaign produced 7,055 paired injected
+  frames for each two-byte scheme and pattern. Observed misses were 33 checksum
+  burst frames, 60 CRC-8 two-bit frames, and 11 CRC-10 two-bit frames; CRC-16
+  and CRC-32 had no observed misses in this sample.
 - Every 8 MiB no-error control reproduced its input byte-for-byte. Detection
   rate is rejected divided by injected frames, never divided by all received
   frames.
+- `experiment_results.py` provides shared strict CSV validation and aggregation
+  for plots and reports. It rejects schema drift, duplicate experiment grains,
+  broken frame identities, non-finite metrics, incorrect stored rates, and
+  incomplete campaigns.
 - `README.md` documents build, protocol, program usage, uv setup, experiments,
-  and plotting. `C/report/report.md` documents design, methodology, pilot
-  results, charts, interpretation, and limitations.
+  plotting, and report regeneration. `C/report/report_template.md` contains
+  editable prose; `C/report/report.md` is generated deterministically with
+  campaign tables, required comparison cases, charts, and limitations.
+- The legacy 11-column CSV is archived as
+  `C/results/raw/experiments_legacy_schema.csv` and is never consumed by the
+  current analysis pipeline.
 
 ## Current Verification
 
@@ -229,8 +244,9 @@ Run from the repository root:
 make -C C test
 ```
 
-Current result: 93 tests pass: seven checksum, thirteen CRC, fifty-one
-error-injection, seventeen frame, and five socket tests. Builds use
+Current result: 99 C checks pass: seven checksum, thirteen CRC, fifty-four
+error-injection, seventeen frame, five socket, and three direct evaluation
+comparisons. Ten Python validation/report/runner tests also pass. Builds use
 `-std=c17 -Wall -Wextra -Wpedantic -Werror` and validate `config.h` as part of
 the normal `all` and `test` targets.
 
@@ -238,29 +254,24 @@ Additional verification completed:
 
 - GCC `-fanalyzer` build with warnings treated as errors;
 - lossless three-frame control transfers for all five schemes;
-- mixed three-frame transfers for all five schemes, each with one clean and
-  two injected frames and consistent sender/receiver category counts;
-- a 75-run large-text pilot with validated lossless controls;
+- mixed three-frame transfers for all five schemes, each with two clean and one
+  injected frame for the pinned seed and consistent sender/receiver counts;
+- a complete 450-run seeded-selection campaign with validated lossless controls;
 - lossless 1499-byte maximum-payload transfers for all five schemes;
 - empty-file transfer; and
 - syntax validation of Python tools and structural/XML validation of the four
   generated SVG plots.
 
-## Exact Next Step
+## Reproduce the Final Evaluation
 
-The mixed-frame and resource-reporting implementation is complete. The next
-step is the final configured empirical campaign, followed by replacing the
-three-repeat pilot figures with the final results.
-
-Example from the repository root:
+Run from the repository root:
 
 ```bash
 make -C C experiments_inference
-make -C C plots
+make -C C results
 ```
 
-## Remaining Roadmap
-
-1. Run and review `experiments_inference` on the demonstration machine.
-2. Update the report's pilot table and interpretation from that final CSV.
-3. Rehearse the sender/receiver demonstration and prepare the final submission.
+The experiment target replaces the CSV with 450 new rows. The `results` target
+validates that campaign, regenerates all four SVGs, and rebuilds the Markdown
+report from its template. The remaining project work is demonstration rehearsal
+and submission packaging.

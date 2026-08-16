@@ -149,6 +149,14 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "detection_rate"):
             load_rows(self.csv_path)
 
+    def test_rejects_nonfinite_metric(self) -> None:
+        row = experiment_row("checksum", "single")
+        row["sender_elapsed_seconds"] = "nan"
+        self.write_rows([row])
+
+        with self.assertRaisesRegex(ValueError, "non-finite"):
+            load_rows(self.csv_path)
+
     def test_validates_complete_campaign_and_required_cases(self) -> None:
         rows = []
         for scheme in SCHEMES:

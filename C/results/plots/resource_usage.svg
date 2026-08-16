@@ -10,33 +10,33 @@
 <text x="825" y="127" text-anchor="middle" font-family="sans-serif" font-size="14">Receiver peak RSS (KiB)</text>
 <rect x="70" y="142" width="840" height="42" fill="white" stroke="#B8B8B8"/>
 <text x="135" y="169" text-anchor="middle" font-family="sans-serif" font-size="14">checksum</text>
-<text x="285" y="169" text-anchor="middle" font-family="monospace" font-size="14">20.703</text>
-<text x="455" y="169" text-anchor="middle" font-family="monospace" font-size="14">27.682</text>
-<text x="640" y="169" text-anchor="middle" font-family="monospace" font-size="14">20072</text>
-<text x="825" y="169" text-anchor="middle" font-family="monospace" font-size="14">20072</text>
+<text x="285" y="169" text-anchor="middle" font-family="monospace" font-size="14">33.937</text>
+<text x="455" y="169" text-anchor="middle" font-family="monospace" font-size="14">45.288</text>
+<text x="640" y="169" text-anchor="middle" font-family="monospace" font-size="14">20018</text>
+<text x="825" y="169" text-anchor="middle" font-family="monospace" font-size="14">20018</text>
 <rect x="70" y="184" width="840" height="42" fill="white" stroke="#B8B8B8"/>
 <text x="135" y="211" text-anchor="middle" font-family="sans-serif" font-size="14">crc8</text>
-<text x="285" y="211" text-anchor="middle" font-family="monospace" font-size="14">710.741</text>
-<text x="455" y="211" text-anchor="middle" font-family="monospace" font-size="14">759.442</text>
-<text x="640" y="211" text-anchor="middle" font-family="monospace" font-size="14">20098</text>
-<text x="825" y="211" text-anchor="middle" font-family="monospace" font-size="14">20098</text>
+<text x="285" y="211" text-anchor="middle" font-family="monospace" font-size="14">946.587</text>
+<text x="455" y="211" text-anchor="middle" font-family="monospace" font-size="14">967.739</text>
+<text x="640" y="211" text-anchor="middle" font-family="monospace" font-size="14">20043</text>
+<text x="825" y="211" text-anchor="middle" font-family="monospace" font-size="14">20043</text>
 <rect x="70" y="226" width="840" height="42" fill="white" stroke="#B8B8B8"/>
 <text x="135" y="253" text-anchor="middle" font-family="sans-serif" font-size="14">crc10</text>
-<text x="285" y="253" text-anchor="middle" font-family="monospace" font-size="14">804.908</text>
-<text x="455" y="253" text-anchor="middle" font-family="monospace" font-size="14">859.945</text>
-<text x="640" y="253" text-anchor="middle" font-family="monospace" font-size="14">20111</text>
-<text x="825" y="253" text-anchor="middle" font-family="monospace" font-size="14">20111</text>
+<text x="285" y="253" text-anchor="middle" font-family="monospace" font-size="14">1019.337</text>
+<text x="455" y="253" text-anchor="middle" font-family="monospace" font-size="14">1062.232</text>
+<text x="640" y="253" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
+<text x="825" y="253" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
 <rect x="70" y="268" width="840" height="42" fill="white" stroke="#B8B8B8"/>
 <text x="135" y="295" text-anchor="middle" font-family="sans-serif" font-size="14">crc16</text>
-<text x="285" y="295" text-anchor="middle" font-family="monospace" font-size="14">817.400</text>
-<text x="455" y="295" text-anchor="middle" font-family="monospace" font-size="14">870.209</text>
-<text x="640" y="295" text-anchor="middle" font-family="monospace" font-size="14">20123</text>
-<text x="825" y="295" text-anchor="middle" font-family="monospace" font-size="14">20123</text>
+<text x="285" y="295" text-anchor="middle" font-family="monospace" font-size="14">1081.037</text>
+<text x="455" y="295" text-anchor="middle" font-family="monospace" font-size="14">1136.404</text>
+<text x="640" y="295" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
+<text x="825" y="295" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
 <rect x="70" y="310" width="840" height="42" fill="white" stroke="#B8B8B8"/>
 <text x="135" y="337" text-anchor="middle" font-family="sans-serif" font-size="14">crc32</text>
-<text x="285" y="337" text-anchor="middle" font-family="monospace" font-size="14">806.487</text>
-<text x="455" y="337" text-anchor="middle" font-family="monospace" font-size="14">861.739</text>
-<text x="640" y="337" text-anchor="middle" font-family="monospace" font-size="14">20123</text>
-<text x="825" y="337" text-anchor="middle" font-family="monospace" font-size="14">20123</text>
+<text x="285" y="337" text-anchor="middle" font-family="monospace" font-size="14">1040.150</text>
+<text x="455" y="337" text-anchor="middle" font-family="monospace" font-size="14">1097.181</text>
+<text x="640" y="337" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
+<text x="825" y="337" text-anchor="middle" font-family="monospace" font-size="14">20056</text>
 <text x="490" y="389" text-anchor="middle" font-family="sans-serif" font-size="13">RSS values are per-process maxima and must not be added as a measured simultaneous peak.</text>
 </svg>

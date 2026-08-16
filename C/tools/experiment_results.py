@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 from collections import defaultdict
+from math import isfinite
 from pathlib import Path
 from statistics import mean, stdev
 
@@ -85,6 +86,9 @@ def _floating(row: dict[str, str], name: str, line_number: int) -> float:
         value = float(row[name])
     except (KeyError, ValueError) as error:
         raise ValueError(f"line {line_number}: invalid number {name}") from error
+
+    if not isfinite(value):
+        raise ValueError(f"line {line_number}: non-finite {name}")
 
     if value < 0.0:
         raise ValueError(f"line {line_number}: negative {name}")

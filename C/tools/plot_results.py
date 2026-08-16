@@ -8,7 +8,13 @@ import html
 import math
 from pathlib import Path
 
-from experiment_results import PATTERNS, SCHEMES, load_summaries, summary_for
+from experiment_results import (
+    PATTERNS,
+    SCHEMES,
+    load_summaries,
+    summary_for,
+    validate_complete_campaign,
+)
 
 
 def svg_document(title: str, width: int, height: int) -> list[str]:
@@ -55,11 +61,11 @@ def write_undetected_error_matrix(
     if injected_summary is not None:
         context = (
             f'{float(injected_summary["input_bytes"]) / 1_048_576.0:.2f} MiB input; '
-            f'one in every {int(injected_summary["error_interval"])} frames selected; '
+            f'seeded selection probability 1/{int(injected_summary["error_interval"])}; '
             f'{int(injected_summary["runs"])} repeats per pattern.'
         )
 
-    elements = svg_document("Mean undetected-frame rate", width, height)
+    elements = svg_document("Pooled undetected-frame rate", width, height)
     elements.append(
         '<text x="500" y="62" text-anchor="middle" font-family="sans-serif" '
         f'font-size="14">{html.escape(context)}</text>'
@@ -141,7 +147,7 @@ def write_frame_outcomes_chart(
     if injected_summary is not None:
         context = (
             f'{float(injected_summary["input_bytes"]) / 1_048_576.0:.2f} MiB input; '
-            f'one in every {int(injected_summary["error_interval"])} frames selected; '
+            f'seeded selection probability 1/{int(injected_summary["error_interval"])}; '
             f'{int(injected_summary["runs"])} repeats per pattern.'
         )
 
@@ -476,6 +482,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     summaries = load_summaries(args.csv_path)
+    validate_complete_campaign(summaries)
     args.output_directory.mkdir(parents=True, exist_ok=True)
     write_undetected_error_matrix(summaries, args.output_directory / "undetected_rate.svg")
     write_frame_outcomes_chart(summaries, args.output_directory / "frame_outcomes.svg")
