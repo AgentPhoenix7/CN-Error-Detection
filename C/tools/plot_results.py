@@ -4,93 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import html
 import math
-from collections import defaultdict
 from pathlib import Path
-from statistics import mean, stdev
 
-
-SCHEMES = ("checksum", "crc8", "crc10", "crc16", "crc32")
-PATTERNS = ("none", "single", "two", "odd", "burst")
-
-
-def load_summaries(path: Path) -> list[dict[str, str | float | int]]:
-    """Group repeated runs and calculate outcome and resource summaries."""
-    grouped: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
-
-    with path.open(newline="", encoding="utf-8") as source:
-        for row in csv.DictReader(source):
-            grouped[(row["scheme"], row["error_pattern"])].append(row)
-
-    summaries: list[dict[str, str | float | int]] = []
-
-    for (scheme, pattern), rows in grouped.items():
-        times = [float(row["receiver_elapsed_seconds"]) for row in rows]
-        frames_injected = sum(int(row["frames_injected"]) for row in rows)
-        frames_rejected = sum(int(row["frames_rejected"]) for row in rows)
-        undetected_frames = sum(int(row["undetected_frames"]) for row in rows)
-        summaries.append(
-            {
-                "scheme": scheme,
-                "error_pattern": pattern,
-                "runs": len(rows),
-                "error_interval": int(rows[0]["error_interval"]),
-                "frames_clean": sum(int(row["frames_clean"]) for row in rows),
-                "frames_injected": frames_injected,
-                "frames_rejected": frames_rejected,
-                "undetected_frames": undetected_frames,
-                "detection_rate": (
-                    frames_rejected / frames_injected
-                    if frames_injected > 0
-                    else 0.0
-                ),
-                "undetected_rate": (
-                    undetected_frames / frames_injected
-                    if frames_injected > 0
-                    else 0.0
-                ),
-                "elapsed_seconds": mean(times),
-                "elapsed_stdev": stdev(times) if len(times) > 1 else 0.0,
-                "sender_cpu_seconds": mean(
-                    float(row["sender_user_cpu_seconds"])
-                    + float(row["sender_system_cpu_seconds"])
-                    for row in rows
-                ),
-                "receiver_cpu_seconds": mean(
-                    float(row["receiver_user_cpu_seconds"])
-                    + float(row["receiver_system_cpu_seconds"])
-                    for row in rows
-                ),
-                "sender_max_rss_kb": mean(
-                    float(row["sender_max_rss_kb"]) for row in rows
-                ),
-                "receiver_max_rss_kb": mean(
-                    float(row["receiver_max_rss_kb"]) for row in rows
-                ),
-                "input_bytes": mean(float(row["input_bytes"]) for row in rows),
-                "output_bytes": mean(float(row["output_bytes"]) for row in rows),
-            }
-        )
-
-    if not summaries:
-        raise ValueError("results CSV contains no data rows")
-
-    return summaries
-
-
-def summary_for(
-    summaries: list[dict[str, str | float | int]],
-    scheme: str,
-    pattern: str,
-) -> dict[str, str | float | int] | None:
-    """Return one scheme/pattern summary when it is present."""
-    for summary in summaries:
-        if summary["scheme"] == scheme and summary["error_pattern"] == pattern:
-            return summary
-
-    return None
+from experiment_results import PATTERNS, SCHEMES, load_summaries, summary_for
 
 
 def svg_document(title: str, width: int, height: int) -> list[str]:

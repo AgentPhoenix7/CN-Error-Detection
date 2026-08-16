@@ -35,11 +35,11 @@ ERROR_INTERVAL ?= 2
 INFERENCE_RESULTS ?= results/experiments_mixed.csv
 PLOT_INPUT ?= $(INFERENCE_RESULTS)
 
-.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation test_end_to_end test_mixed_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation test_tools test_end_to_end test_mixed_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
 
 all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST) $(FRAME_TEST) $(SOCKET_UTILS_TEST) $(EVALUATION_TEST) $(SENDER) $(RECEIVER)
 
-test: check_config_header test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation
+test: check_config_header test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation test_tools
 
 check_config_header: $(CONFIG_HEADER)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -x c -fsyntax-only $(CONFIG_HEADER)
@@ -82,6 +82,9 @@ test_evaluation: $(EVALUATION_TEST)
 
 $(EVALUATION_TEST): $(EVALUATION_TEST_SOURCES) include/checksum.h $(CRC_HEADER) $(ERROR_INJECTION_HEADER) | $(BUILD_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(EVALUATION_TEST_SOURCES) -o $@
+
+test_tools:
+	$(PYTHON_RUN) python -m unittest discover -s tests -p 'test_*.py' -v
 
 $(SENDER): $(SENDER_SOURCES) $(FRAME_HEADER) $(SOCKET_UTILS_HEADER) | $(BUILD_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SENDER_SOURCES) -o $@
