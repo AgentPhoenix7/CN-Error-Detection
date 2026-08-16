@@ -23,6 +23,8 @@ typedef enum
   ERROR_PATTERN_RANDOM
 } error_pattern_t;
 
+#define SELECTION_SEED_XOR UINT32_C(0x9E3779B9)
+
 static void sender_print_usage(const char *program)
 {
   fprintf(
@@ -31,7 +33,8 @@ static void sender_print_usage(const char *program)
     "[ERROR_INTERVAL]\n"
     "  SCHEME: checksum | crc8 | crc10 | crc16 | crc32\n"
     "  PATTERN: none | single | two | odd | burst | random\n"
-    "  ERROR_INTERVAL: corrupt every Nth frame (default: 2)\n",
+    "  ERROR_INTERVAL: select each frame with seeded probability 1/N "
+    "(default: 2)\n",
     program
   );
 }
@@ -83,7 +86,7 @@ static bool sender_parse_seed(const char *text, uint32_t *seed)
 
 static bool sender_parse_error_interval(
   const char *text,
-  size_t *error_interval
+  uint32_t *error_interval
 )
 {
   char *end;
@@ -96,11 +99,11 @@ static bool sender_parse_error_interval(
   errno = 0;
   value = strtoul(text, &end, 10);
 
-  if (errno != 0 || *end != '\0' || value == 0UL || value > SIZE_MAX) {
+  if (errno != 0 || *end != '\0' || value == 0UL || value > UINT32_MAX) {
     return false;
   }
 
-  *error_interval = (size_t)value;
+  *error_interval = (uint32_t)value;
   return true;
 }
 
@@ -238,7 +241,8 @@ int main(int argc, char *argv[])
   uint32_t seed = UINT32_C(0x12345678);
   frame_fcs_scheme_t scheme;
   error_pattern_t pattern;
-  error_injection_rng_t rng;
+  error_injection_rng_t selection_rng;
+  error_injection_rng_t error_rng;
   frame_header_t header;
   uint8_t payload[MAX_PAYLOAD_SIZE];
   uint8_t serialized_frame[MAX_FRAME_SIZE];
@@ -249,7 +253,8 @@ int main(int argc, char *argv[])
   size_t serialized_length;
   size_t frame_count = 0U;
   size_t frames_injected = 0U;
-  size_t error_interval = 2U;
+  uint32_t error_interval = UINT32_C(2);
+  bool inject_frame;
   struct timespec start_time;
   struct timespec end_time;
   struct rusage start_usage;
@@ -310,7 +315,11 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
-  (void)error_injection_rng_seed(&rng, seed);
+  (void)error_injection_rng_seed(
+    &selection_rng,
+    seed ^ SELECTION_SEED_XOR
+  );
+  (void)error_injection_rng_seed(&error_rng, seed);
   memcpy(header.source_mac, source_mac, sizeof source_mac);
   memcpy(header.destination_mac, destination_mac, sizeof destination_mac);
 
@@ -335,15 +344,26 @@ int main(int argc, char *argv[])
       goto cleanup;
     }
 
+    inject_frame = false;
+
     if (
       pattern != ERROR_PATTERN_NONE &&
-      frame_count % error_interval == 0U
+      !error_injection_select_frame(
+        &selection_rng,
+        error_interval,
+        &inject_frame
+      )
     ) {
+      fputs("sender: failed to select an error-injection frame\n", stderr);
+      goto cleanup;
+    }
+
+    if (inject_frame) {
       if (!sender_apply_error(
         serialized_frame,
         serialized_length,
         pattern,
-        &rng
+        &error_rng
       )) {
         fputs("sender: failed to inject an error\n", stderr);
         goto cleanup;
@@ -391,14 +411,14 @@ int main(int argc, char *argv[])
 
   printf(
     "Sent %zu frame(s): %zu clean, %zu error-injected using %s/%s "
-    "(seed 0x%08X, interval %zu).\n",
+    "(seed 0x%08X, selection probability 1/%u).\n",
     frame_count,
     frame_count - frames_injected,
     frames_injected,
     frame_fcs_scheme_name(scheme),
     argv[3],
     (unsigned int)seed,
-    error_interval
+    (unsigned int)error_interval
   );
   printf(
     "SENDER_METRICS,%zu,%zu,%zu,%.9f,%.9f,%.9f,%ld\n",

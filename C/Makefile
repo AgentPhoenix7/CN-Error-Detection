@@ -86,6 +86,7 @@ test_end_to_end: all
 
 test_mixed_end_to_end: all
 	$(PYTHON_RUN) tools/run_experiments.py $(EXPERIMENT_INPUT) --schemes checksum crc8 crc10 crc16 crc32 --patterns single --repeats 1 --error-interval 2 --results /tmp/assignment1-mixed-e2e.csv --output-directory /tmp/assignment1-mixed-e2e-output
+	$(PYTHON_RUN) tests/validate_mixed_csv.py /tmp/assignment1-mixed-e2e.csv
 
 generate_test_data:
 	$(PYTHON_RUN) tools/generate_test_data.py
