@@ -81,15 +81,17 @@ Expected: all existing tests and the new selection tests pass.
 - [ ] **Step 1: Strengthen the mixed end-to-end assertion before changing sender behavior**
 
 Add `C/tests/validate_mixed_csv.py` using `csv.DictReader`. It must require one
-row per scheme and assert `frames_injected > 0`, `frames_clean > 0`, and every
-existing count invariant. Update `test_mixed_end_to_end` to run it after the
-three-frame transfer.
+row per scheme and assert the approved seeded selection's exact three-frame
+result: `frames_injected == 1`, `frames_clean == 2`, and every existing count
+invariant. Update `test_mixed_end_to_end` to run it after the three-frame
+transfer.
 
 - [ ] **Step 2: Run mixed end-to-end and verify the validator fails**
 
 Run: `make -C C test_mixed_end_to_end`
 
-Expected: failure because the validator target/file is not yet wired completely.
+Expected: the validator fails because fixed modulo selection produces two
+injected frames and one clean frame.
 
 - [ ] **Step 3: Replace fixed modulo selection**
 
