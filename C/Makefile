@@ -34,8 +34,10 @@ PERFORMANCE_REPEATS ?= 10
 ERROR_INTERVAL ?= 2
 INFERENCE_RESULTS ?= results/experiments_mixed.csv
 PLOT_INPUT ?= $(INFERENCE_RESULTS)
+REPORT_TEMPLATE := report/report_template.md
+REPORT_OUTPUT := report/report.md
 
-.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation test_tools test_end_to_end test_mixed_end_to_end generate_test_data experiments experiments_inference plots check_config_header check_crc_header clean
+.PHONY: all test test_checksum test_crc test_error_injection test_frame test_socket_utils test_evaluation test_tools test_end_to_end test_mixed_end_to_end generate_test_data experiments experiments_inference plots report results check_config_header check_crc_header clean
 
 all: check_config_header $(CHECKSUM_TEST) $(CRC_TEST) $(ERROR_INJECTION_TEST) $(FRAME_TEST) $(SOCKET_UTILS_TEST) $(EVALUATION_TEST) $(SENDER) $(RECEIVER)
 
@@ -111,6 +113,11 @@ experiments_inference: all generate_test_data
 
 plots:
 	$(PYTHON_RUN) tools/plot_results.py $(PLOT_INPUT) results/plots
+
+report:
+	$(PYTHON_RUN) tools/generate_report.py $(PLOT_INPUT) $(REPORT_TEMPLATE) $(REPORT_OUTPUT)
+
+results: plots report
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
