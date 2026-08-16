@@ -186,11 +186,11 @@ runs that wrote all payloads and runs that rejected corrupted frames.
 
 | Scheme | Sender mean (ms) | Receiver mean (ms) | Receiver SD (ms) |
 | --- | ---: | ---: | ---: |
-| Checksum | 34.752 | 45.855 | 15.241 |
-| CRC-8 | 946.631 | 974.383 | 77.455 |
-| CRC-10 | 1019.362 | 1066.736 | 79.384 |
-| CRC-16 | 1081.074 | 1140.787 | 110.116 |
-| CRC-32 | 1040.190 | 1102.461 | 150.483 |
+| Checksum | 25.738 | 33.981 | 7.357 |
+| CRC-8 | 808.670 | 833.608 | 69.344 |
+| CRC-10 | 902.338 | 950.130 | 51.717 |
+| CRC-16 | 958.813 | 1010.966 | 85.543 |
+| CRC-32 | 960.208 | 1014.515 | 116.585 |
 
 ![Execution time](../results/plots/execution_time.svg)
 
@@ -200,11 +200,11 @@ CPU time and peak RSS are reported separately for sender and receiver.
 
 | Scheme | Sender CPU (ms) | Receiver CPU (ms) | Sender peak RSS (KiB) | Receiver peak RSS (KiB) |
 | --- | ---: | ---: | ---: | ---: |
-| Checksum | 33.937 | 45.288 | 20018 | 20018 |
-| CRC-8 | 946.587 | 967.739 | 20043 | 20043 |
-| CRC-10 | 1019.337 | 1062.232 | 20056 | 20056 |
-| CRC-16 | 1081.037 | 1136.404 | 20056 | 20056 |
-| CRC-32 | 1040.150 | 1097.181 | 20056 | 20056 |
+| Checksum | 24.952 | 33.618 | 20150 | 20150 |
+| CRC-8 | 808.417 | 829.238 | 20175 | 20175 |
+| CRC-10 | 902.303 | 945.784 | 20188 | 20188 |
+| CRC-16 | 958.692 | 1006.602 | 20188 | 20188 |
+| CRC-32 | 960.101 | 1010.142 | 20188 | 20188 |
 
 ![Process resource usage](../results/plots/resource_usage.svg)
 
