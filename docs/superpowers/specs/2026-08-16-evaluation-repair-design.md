@@ -8,13 +8,14 @@ weakening reproducibility or hiding empirical limitations.
 
 ## Scope
 
-The repair covers five audit findings:
+The repair covers six audit findings:
 
 1. randomly select error-injected frames while retaining deterministic replay;
 2. make the three required checksum-versus-CRC outcomes explicit;
 3. replace obsolete pilot prose and tables with the final campaign results;
 4. explain the relevant theoretical detection properties of each CRC;
-5. separate the obsolete pre-mixed CSV from active evaluation artifacts.
+5. make the Markdown report reproducible from the experiment CSV;
+6. separate the obsolete pre-mixed CSV from active evaluation artifacts.
 
 The checksum, CRC, frame, TCP, and error-mutation algorithms remain unchanged.
 
@@ -73,6 +74,41 @@ two-bit distance limits, odd-weight detection through the `(x + 1)` factor,
 and guaranteed burst detection up to the CRC width. Empirical zero misses will
 remain explicitly distinguished from theoretical guarantees.
 
+## Reproducible report generation
+
+`C/report/report.md` becomes a generated artifact rather than the editable
+source of empirical values. Its editable source is
+`C/report/report_template.md`, which contains the stable technical narrative,
+methodology, theoretical interpretation, limitations, and named placeholders
+for campaign-derived sections.
+
+`C/tools/experiment_results.py` owns CSV loading, schema validation, invariant
+checks, grouping, rates, timing summaries, resource summaries, and the three
+rubric-aligned comparison rows. Both `plot_results.py` and the new
+`generate_report.py` import this module. This single calculation path prevents
+the plots and report from applying different denominators or aggregations.
+
+`generate_report.py` reads `experiments_mixed.csv`, renders the campaign scope,
+outcome tables, required comparison cases, timing/resource tables, and exact
+observed caveats into the template, then writes `C/report/report.md`. The output
+starts with a generated-file notice naming the source CSV, template, generator,
+and regeneration command.
+
+The Makefile adds:
+
+```text
+make -C C report
+make -C C results
+```
+
+`report` regenerates only `report.md`. `results` regenerates both plots and the
+report from the same CSV. Running experiments remains separate so generating
+documentation never starts network processes unexpectedly.
+
+The generator rejects missing groups, inconsistent repeats, broken frame-count
+invariants, incompatible schemas, and absent template placeholders instead of
+publishing a partial report. A repeat generation must be byte-for-byte stable.
+
 ## Error handling and compatibility
 
 - `ERROR_INTERVAL=0` remains invalid.
@@ -92,8 +128,10 @@ make -C C test_end_to_end
 make -C C test_mixed_end_to_end
 make -C C experiments_inference
 make -C C plots
+make -C C report
 ```
 
 Independently validate CSV uniqueness, group coverage, row invariants, rates,
 control byte equality, SVG XML structure, regenerated-plot equality, report
-numbers, strict `-fanalyzer`, and `git diff --check`.
+numbers, byte-stable report regeneration, strict `-fanalyzer`, and
+`git diff --check`.
