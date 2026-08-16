@@ -1444,6 +1444,89 @@ static int test_flip_full_length_random_burst(void)
   return 0;
 }
 
+static int test_reproduce_random_frame_selection(void)
+{
+  static const bool expected[] = {
+    true, false, false, true, true, true,
+    true, false, false, false, false, false
+  };
+  error_injection_rng_t rng = {UINT32_C(0)};
+  size_t index;
+
+  if (!error_injection_rng_seed(&rng, UINT32_C(0x8C032FC1))) {
+    fputs("FAIL: frame-selection RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  for (index = 0U; index < sizeof expected / sizeof expected[0]; index++) {
+    bool selected = !expected[index];
+
+    if (
+      !error_injection_select_frame(&rng, UINT32_C(2), &selected) ||
+      selected != expected[index]
+    ) {
+      fprintf(stderr, "FAIL: frame-selection decision %zu\n", index);
+      return 1;
+    }
+  }
+
+  if (rng.state != UINT32_C(0xEA0EB6CD)) {
+    fputs("FAIL: frame-selection final RNG state\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reproduce random frame selection");
+  return 0;
+}
+
+static int test_select_every_frame_without_advancing_rng(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+  bool selected = false;
+
+  if (
+    !error_injection_rng_seed(&rng, seed) ||
+    !error_injection_select_frame(&rng, UINT32_C(1), &selected) ||
+    !selected ||
+    rng.state != seed
+  ) {
+    fputs("FAIL: select every frame without advancing RNG\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: select every frame without advancing RNG");
+  return 0;
+}
+
+static int test_reject_invalid_frame_selection(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0)};
+  const uint32_t seed = UINT32_C(0x12345678);
+  bool selected = true;
+
+  if (!error_injection_rng_seed(&rng, seed)) {
+    fputs("FAIL: invalid frame-selection RNG setup failed\n", stderr);
+    return 1;
+  }
+
+  if (
+    error_injection_select_frame(&rng, UINT32_C(0), &selected) ||
+    rng.state != seed ||
+    !selected ||
+    error_injection_select_frame(NULL, UINT32_C(2), &selected) ||
+    !selected ||
+    error_injection_select_frame(&rng, UINT32_C(2), NULL) ||
+    rng.state != seed
+  ) {
+    fputs("FAIL: invalid frame selection changed output or RNG\n", stderr);
+    return 1;
+  }
+
+  puts("PASS: reject invalid frame selection");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
@@ -1499,6 +1582,9 @@ int main(void)
   failures += test_reject_zero_random_burst_length();
   failures += test_reject_excessive_random_burst_length();
   failures += test_flip_full_length_random_burst();
+  failures += test_reproduce_random_frame_selection();
+  failures += test_select_every_frame_without_advancing_rng();
+  failures += test_reject_invalid_frame_selection();
 
   return failures == 0 ? 0 : 1;
 }

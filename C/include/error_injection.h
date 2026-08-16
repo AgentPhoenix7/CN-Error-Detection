@@ -31,6 +31,24 @@ bool error_injection_rng_seed(
 );
 
 /**
+ * @brief Selects a frame with reproducible probability `1 / denominator`.
+ *
+ * A denominator of one always selects the frame without advancing `rng`.
+ * Other valid denominators advance the generator exactly once. Invalid input
+ * leaves both the generator and output unchanged.
+ *
+ * @param[in,out] rng Initialized pseudo-random generator state.
+ * @param[in] denominator Positive inverse selection probability.
+ * @param[out] selected Whether the current frame was selected.
+ * @return `true` when a decision was produced; otherwise `false`.
+ */
+bool error_injection_select_frame(
+  error_injection_rng_t *rng,
+  uint32_t denominator,
+  bool *selected
+);
+
+/**
  * @brief Flips one pseudo-randomly selected bit.
  *
  * Uses and advances the supplied generator state. No data or generator state

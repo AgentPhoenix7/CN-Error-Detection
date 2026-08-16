@@ -27,6 +27,30 @@ bool error_injection_rng_seed(
   return true;
 }
 
+bool error_injection_select_frame(
+  error_injection_rng_t *rng,
+  uint32_t denominator,
+  bool *selected
+)
+{
+  uint64_t scaled_value;
+
+  if (rng == NULL || selected == NULL || denominator == 0U) {
+    return false;
+  }
+
+  if (denominator == 1U) {
+    *selected = true;
+    return true;
+  }
+
+  scaled_value =
+    (uint64_t)error_injection_rng_next(rng) * denominator;
+  *selected = (scaled_value >> 32U) == 0U;
+
+  return true;
+}
+
 bool error_injection_flip_random_bit(
   uint8_t *data,
   size_t length,
