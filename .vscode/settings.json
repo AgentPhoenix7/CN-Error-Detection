@@ -1,5 +1,5 @@
 {
-  "editor.fontFamily": "'MesloLGS Nerd Font', Consolas, 'Courier New', monospace",
+  "editor.fontFamily": "'JetBrainsMono Nerd Font', 'MesloLGS Nerd Font', Consolas, 'Courier New', monospace",
   "files.autoSave": "afterDelay",
   "editor.wordWrap": "on",
   "C_Cpp.doxygen.generatedStyle": "/**",
