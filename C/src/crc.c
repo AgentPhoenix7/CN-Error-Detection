@@ -22,7 +22,17 @@ const crc_parameters_t crc32_parameters = {
   .polynomial = UINT32_C(0x04C11DB7)
 };
 
-static uint32_t crc_width_mask(uint8_t width)
+/**
+ * static uint32_t crc_width_mask(const uint8_t width)
+ * {
+ *   assert(width >= 1U);
+ *   assert(width <= 32U);
+ *
+ *   return UINT32_MAX >> (32U - width);
+ * }
+ */
+
+static uint32_t crc_width_mask(const uint8_t width)
 {
   assert(width >= 1U);
   assert(width <= 32U);
@@ -36,42 +46,35 @@ static uint32_t crc_width_mask(uint8_t width)
 
 uint32_t crc_compute(
   const uint8_t *data,
-  size_t length,
+  const size_t length,
   const crc_parameters_t *parameters
 )
 {
-  uint32_t width_mask;
-  uint32_t top_bit_mask;
   uint32_t remainder = 0U;
-  size_t byte_index;
-  uint8_t bit_index;
 
   assert(parameters != NULL);
   assert(data != NULL || length == 0U);
 
-  width_mask = crc_width_mask(parameters->width);
+  const uint32_t width_mask = crc_width_mask(parameters->width);
   assert((parameters->polynomial & ~width_mask) == 0U);
 
-  top_bit_mask = UINT32_C(1) << (parameters->width - 1U);
+  const uint32_t top_bit_mask = UINT32_C(1) << (parameters->width - 1U);
 
   for (
-    byte_index = 0U;
+    size_t byte_index = 0U;
     byte_index < length;
     byte_index++
   )
   {
     for (
-      bit_index = 0U;
+      uint8_t bit_index = 0U;
       bit_index < 8U;
       bit_index++
     )
     {
-      bool data_bit_set;
-      bool top_bit_set;
-
-      data_bit_set = (data[byte_index] &
-                     (UINT8_C(0x80) >> bit_index)) != 0U;
-      top_bit_set = (remainder & top_bit_mask) != 0U;
+      const bool data_bit_set = (data[byte_index] &
+        (UINT8_C(0x80) >> bit_index)) != 0U;
+      const bool top_bit_set = (remainder & top_bit_mask) != 0U;
 
       remainder = (remainder << 1U) & width_mask;
 
@@ -86,8 +89,8 @@ uint32_t crc_compute(
 
 bool crc_verify(
   const uint8_t *data,
-  size_t length,
-  uint32_t received_crc,
+  const size_t length,
+  const uint32_t received_crc,
   const crc_parameters_t *parameters
 )
 {
