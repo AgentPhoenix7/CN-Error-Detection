@@ -182,7 +182,8 @@ class ExperimentResultsTest(unittest.TestCase):
                     "trials": 10,
                     "checksum_detected": 10,
                     "crc_detected": 10,
-                    "case_count": 10,
+                    "case_count_min": 10,
+                    "case_count_max": 10,
                 },
                 {
                     "case": "Checksum only",
@@ -191,7 +192,8 @@ class ExperimentResultsTest(unittest.TestCase):
                     "trials": 10,
                     "checksum_detected": 10,
                     "crc_detected": 9,
-                    "case_count": 1,
+                    "case_count_min": 1,
+                    "case_count_max": 1,
                 },
                 {
                     "case": "CRC only",
@@ -200,7 +202,8 @@ class ExperimentResultsTest(unittest.TestCase):
                     "trials": 10,
                     "checksum_detected": 8,
                     "crc_detected": 10,
-                    "case_count": 2,
+                    "case_count_min": 2,
+                    "case_count_max": 2,
                 },
             ],
         )
@@ -213,6 +216,44 @@ class ExperimentResultsTest(unittest.TestCase):
         )
         self.assertEqual(checksum_burst["undetected_frames"], 2)
         self.assertAlmostEqual(float(checksum_burst["undetected_rate"]), 0.2)
+
+    def test_required_comparisons_bound_unknown_intersections(self) -> None:
+        rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
+        rows = [
+            experiment_row(row["scheme"], row["error_pattern"], rejected=8)
+            if (row["scheme"], row["error_pattern"]) == ("checksum", "two")
+            else experiment_row(row["scheme"], row["error_pattern"], rejected=9)
+            if (row["scheme"], row["error_pattern"]) == ("crc10", "two")
+            else row for row in rows
+        ]
+        self.write_rows(rows)
+        comparison = required_comparisons(load_summaries(self.csv_path))[1]
+        self.assertEqual(comparison["case_count_min"], 0)
+        self.assertEqual(comparison["case_count_max"], 1)
+
+    def test_required_comparisons_reject_unpaired_seeds(self) -> None:
+        rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
+        next(row for row in rows if row["scheme"] == "crc10" and row["error_pattern"] == "two")["seed"] = "0x12345679"
+        self.write_rows(rows)
+        with self.assertRaisesRegex(ValueError, "unpaired"):
+            required_comparisons(load_summaries(self.csv_path))
+
+    def test_rejects_metadata_changes_within_group(self) -> None:
+        for field, value in (("input_file", "other.bin"), ("input_bytes", "101"), ("error_interval", "3")):
+            with self.subTest(field=field):
+                first = experiment_row("crc8", "single", repeat=1)
+                second = experiment_row("crc8", "single", repeat=2)
+                second[field] = value
+                self.write_rows([first, second])
+                with self.assertRaisesRegex(ValueError, "inconsistent.*" + field):
+                    load_summaries(self.csv_path)
+
+    def test_rejects_different_corpora_in_complete_campaign(self) -> None:
+        rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
+        next(row for row in rows if row["scheme"] == "crc8" and row["error_pattern"] == "single")["input_file"] = "different.bin"
+        self.write_rows(rows)
+        with self.assertRaisesRegex(ValueError, "input files"):
+            validate_complete_campaign(load_summaries(self.csv_path))
 
 
 if __name__ == "__main__":

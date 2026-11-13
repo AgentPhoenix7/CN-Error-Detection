@@ -3,6 +3,7 @@
 #include "config.h"
 #include "frame.h"
 #include "socket_utils.h"
+#include "process_metrics.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -206,7 +207,8 @@ int main(int argc, char *argv[])
 
   if (
     clock_gettime(CLOCK_MONOTONIC, &end_time) != 0 ||
-    getrusage(RUSAGE_SELF, &end_usage) != 0
+    getrusage(RUSAGE_SELF, &end_usage) != 0 ||
+    !process_metrics_peak_rss_kb(&metrics.max_rss_kb)
   ) {
     perror("receiver: finish metrics");
     goto cleanup;
@@ -224,7 +226,6 @@ int main(int argc, char *argv[])
     &start_usage.ru_stime,
     &end_usage.ru_stime
   );
-  metrics.max_rss_kb = end_usage.ru_maxrss;
 
   printf(
     "Received %zu frame(s): %zu accepted, %zu rejected; "

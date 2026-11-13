@@ -13,6 +13,41 @@ static uint32_t error_injection_rng_next(
   return rng->state;
 }
 
+bool error_injection_rng_bounded(
+  error_injection_rng_t *rng,
+  const size_t bound,
+  size_t *value
+)
+{
+  const uint64_t range = UINT64_C(0x100000000);
+  uint64_t product;
+
+  if (rng == NULL || value == NULL || bound == 0U || (uint64_t)bound > range) {
+    return false;
+  }
+
+  const uint32_t threshold = (uint32_t)((range - bound) % bound);
+  do {
+    product = (uint64_t)error_injection_rng_next(rng) * (uint64_t)bound;
+  } while ((uint32_t)product < threshold);
+
+  *value = (size_t)(product >> 32U);
+  return true;
+}
+
+static bool error_injection_is_valid_random_bit_length(
+  const size_t length,
+  size_t *total_bit_count
+)
+{
+  if (length == 0U || length > SIZE_MAX / 8U ||
+      (uint64_t)length > UINT64_C(0x100000000) / 8U) {
+    return false;
+  }
+  *total_bit_count = length * 8U;
+  return true;
+}
+
 bool error_injection_rng_seed(
   error_injection_rng_t *rng,
   const uint32_t seed
@@ -54,18 +89,17 @@ bool error_injection_flip_random_bit(
   error_injection_rng_t *rng
 )
 {
+  size_t bit_count;
+  size_t bit_index;
   if (
     data == NULL ||
     rng == NULL ||
-    length == 0U ||
-    length > SIZE_MAX / 8U
+    !error_injection_is_valid_random_bit_length(length, &bit_count)
   ) {
     return false;
   }
 
-  const size_t bit_count = length * 8U;
-  const uint32_t random_value = error_injection_rng_next(rng);
-  const size_t bit_index = (size_t)random_value % bit_count;
+  (void)error_injection_rng_bounded(rng, bit_count, &bit_index);
 
   return error_injection_flip_bit(
     data,
@@ -80,24 +114,22 @@ bool error_injection_flip_random_two_bits(
   error_injection_rng_t *rng
 )
 {
+  size_t bit_count;
+  size_t first_bit_index;
   size_t second_bit_index;
   size_t separation;
 
   if (
     data == NULL ||
     rng == NULL ||
-    length == 0U ||
-    length > SIZE_MAX / 8U
+    !error_injection_is_valid_random_bit_length(length, &bit_count)
   ) {
     return false;
   }
 
-  const size_t bit_count = length * 8U;
-  const size_t first_bit_index = (size_t)error_injection_rng_next(rng) % bit_count;
-
   do {
-    second_bit_index =
-      (size_t)error_injection_rng_next(rng) % bit_count;
+    (void)error_injection_rng_bounded(rng, bit_count, &first_bit_index);
+    (void)error_injection_rng_bounded(rng, bit_count, &second_bit_index);
 
     if (first_bit_index > second_bit_index) {
       separation = first_bit_index - second_bit_index;
@@ -123,19 +155,17 @@ bool error_injection_flip_random_odd_bits(
 {
   size_t *bit_indices;
   size_t previous_index;
+  size_t total_bit_count;
 
   if (
     data == NULL ||
     rng == NULL ||
-    length == 0U ||
-    length > SIZE_MAX / 8U ||
+    !error_injection_is_valid_random_bit_length(length, &total_bit_count) ||
     bit_count == 0U ||
     bit_count % 2U == 0U
   ) {
     return false;
   }
-
-  const size_t total_bit_count = length * 8U;
 
   if (
     bit_count > total_bit_count ||
@@ -152,8 +182,12 @@ bool error_injection_flip_random_odd_bits(
 
   size_t selected_count = 0U;
 
-  while (selected_count < bit_count) {
-    const size_t candidate = (size_t)error_injection_rng_next(rng) % total_bit_count;
+  /* Floyd's algorithm selects a distinct subset with exactly bit_count draws
+     (apart from bounded-mapping rejection), even for near-full subsets. */
+  for (selected_count = 0U; selected_count < bit_count; selected_count++) {
+    const size_t current_bound = total_bit_count - bit_count + selected_count;
+    size_t candidate = 0U;
+    (void)error_injection_rng_bounded(rng, current_bound + 1U, &candidate);
 
     for (
       previous_index = 0U;
@@ -165,10 +199,8 @@ bool error_injection_flip_random_odd_bits(
       }
     }
 
-    if (previous_index == selected_count) {
-      bit_indices[selected_count] = candidate;
-      selected_count++;
-    }
+    bit_indices[selected_count] =
+      previous_index == selected_count ? candidate : current_bound;
   }
 
   const bool result = error_injection_flip_odd_bits(
@@ -190,24 +222,23 @@ bool error_injection_flip_random_burst(
   error_injection_rng_t *rng
 )
 {
+  size_t total_bit_count;
+  size_t start_bit_index;
   if (
     data == NULL ||
     rng == NULL ||
-    length == 0U ||
-    length > SIZE_MAX / 8U ||
+    !error_injection_is_valid_random_bit_length(length, &total_bit_count) ||
     burst_length == 0U
   ) {
     return false;
   }
-
-  const size_t total_bit_count = length * 8U;
 
   if (burst_length > total_bit_count) {
     return false;
   }
 
   const size_t valid_start_count = total_bit_count - burst_length + 1U;
-  const size_t start_bit_index = (size_t)error_injection_rng_next(rng) % valid_start_count;
+  (void)error_injection_rng_bounded(rng, valid_start_count, &start_bit_index);
 
   return error_injection_flip_burst(
     data,

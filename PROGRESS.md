@@ -8,6 +8,28 @@ Attach or reference this file and say:
 
 `AGENTS.md` is authoritative for repository layout, formatting, testing, and the guided-learning workflow.
 
+## Current audit status: November 13, 2026
+
+Read [the assignment audit](docs/assignment-compliance.md) before deciding what
+is complete. The core implementation and 450-run evaluation exist, but the
+assignment is not yet certified fully compliant or submission-ready.
+
+- Confirmed by the user: use `instruction.jpg`'s 64--1518-byte complete-frame
+  range to clarify the PDF; **retain one-byte sequence numbering as a project
+  requirement**, despite its omission from the PDF.
+- Open code gap: CRC-32 pads a short payload to 45 bytes, while the PDF's
+  independent minimum is 46. The user explicitly excluded this review problem
+  6 from the follow-up fixes; frame geometry remains unchanged.
+- Open interpretation: the image's “Length of Frame” field is implemented as
+  valid unpadded payload length; named CRC selection is supported, arbitrary
+  polynomial CLI input is not.
+- Confirmed by the user: separate report-preparation rules are unavailable;
+  mark formatting pending. Demonstration, final submission, and Drive upload
+  have not been verified.
+- Fresh follow-up checks: 104 C checks, 26 Python tests, clean and mixed transfers,
+  sequence wrap for all five schemes, and FCS rejection of every individual
+  sequence-bit flip. See the assignment audit for the verification summary.
+
 ## Assignment Objective
 
 Build an error-detection simulation with separate sender and receiver programs communicating through sockets. The sender reads a file, creates Ethernet-like frames, optionally injects bit errors, and sends checksum/CRC codewords. The receiver calculates syndromes and accepts or rejects each dataword.
@@ -22,7 +44,9 @@ Required schemes:
 
 Required error patterns include single-bit, two isolated single-bit, odd-number, and burst errors. Results must compare detection performance, execution time, and resource utilization using tables and graphs.
 
-Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026**.
+Dates recorded in the PDF: demonstration **10–14 August 2026**; report submission
+**17–21 August 2026**, with a softcopy uploaded to Drive. These are historical
+assignment dates, not a verified submission record or new schedule.
 
 ## Collaboration Rules
 
@@ -35,7 +59,9 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 
 ## Working Design Decisions
 
-- Use pure C17, GCC, POSIX sockets, and TCP. The professor allows either TCP or UDP; TCP isolates the experiment from transport loss and reordering.
+- Use pure C17, GCC, POSIX sockets, and TCP. The illustration requires sockets;
+  the PDF does not prescribe TCP versus UDP. TCP is the implementation choice
+  to isolate deliberate corruption from transport loss and reordering.
 - Test checksum and all four CRC variants on equivalent data and error patterns.
 - CRC uses academic polynomial division with the listed polynomial, initial remainder zero, no reflection, and no final XOR.
 - CRC-10 is serialized in network byte order with its 10 remainder bits
@@ -44,6 +70,9 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   remainder right by six bits for `crc_verify()`.
 - Custom frame header: source MAC 6 bytes, destination MAC 6 bytes, valid
   payload length 2 bytes, sequence number 1 byte; total header size 15 bytes.
+- Sequence numbers are a confirmed project requirement: start at 0, increment
+  modulo 256, serialize/parse the byte, and protect it with the FCS. TCP
+  supplies ordering; receiver sequence-continuity checks and ARQ do not exist.
 - The two-byte payload-length field stores the actual unpadded payload length
   in network byte order; it does not store complete frame length.
 - Zero padding is transmitted but excluded from the payload-length field. The
@@ -58,6 +87,8 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   of the simulated frame or FCS, and is not corrupted by error injection. A
   zero record length terminates the transfer.
 - Complete simulated frame range: 64–1518 bytes.
+- This range follows the user-confirmed illustration clarification. It does
+  not resolve the separate minimum-46-byte payload gap noted above.
 - Absolute padded payload range: 45–1502 bytes. CRC-8 uses 48–1502 bytes;
   the two-byte schemes use 47–1501 bytes; CRC-32 uses 45–1499 bytes.
 - FCS sizes: checksum 2, CRC-8 1, CRC-10 2, CRC-16 2, CRC-32 4 bytes.
@@ -85,7 +116,7 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 
 ### Repository and tooling
 
-- Repository root is `Assignment 1/`; C code is under `C/`.
+- Repository root is `CN-Error-Detection/`; C code is under `C/`.
 - Root and C-specific `.gitignore` files exist; this progress file is trackable.
 - VS Code Makefile Tools uses `C/` as its Make directory.
 - Local VS Code launch configurations exist for the checksum, CRC,
@@ -140,25 +171,31 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   result to a safe MSB-first bit position, and reuses the deterministic
   single-bit primitive. Tests cover a fixed reproducible vector, null data,
   null RNG state, zero length, overflow-sized length, and atomic rejection.
-- `error_injection_flip_random_two_bits()` repeatedly selects until the two
+- `error_injection_flip_random_two_bits()` resamples pairs until the two
   positions differ by more than one, then reuses the deterministic two-bit
-  primitive. Its reproducible vector selects bits 7 and 2 from seed
+  primitive. Its reproducible vector selects bits 3 and 6 from seed
   `0x12345678`. Tests cover null data, null RNG state, zero length,
   overflow-sized length, and atomic rejection.
 - `error_injection_flip_random_odd_bits()` selects a caller-requested positive
   odd number of distinct positions, stores them in a checked temporary array,
   and reuses `error_injection_flip_odd_bits()` for mutation. Its three-bit
-  reproducible vector produces `0x61` from seed `0x12345678`.
+  reproducible Floyd-sampling vector produces `0x64` from seed `0x12345678`.
 - Random odd-bit tests cover null data, null RNG state, zero and
   overflow-sized lengths, zero and even counts, counts exceeding available
-  bits, temporary-allocation size overflow, and duplicate-position
-  reselection. Rejected inputs preserve both data and RNG state.
+  bits, temporary-allocation size overflow, and Floyd collision handling.
+  Rejected inputs preserve both data and RNG state.
 - `error_injection_flip_random_burst()` selects one valid contiguous start
-  position with one RNG advance and reuses `error_injection_flip_burst()`.
+  position with one or more RNG draws (bounded rejection may retry) and reuses
+  `error_injection_flip_burst()`.
 - Random-burst tests cover a reproducible cross-byte vector, null data, null
   RNG state, zero and overflow-sized data lengths, zero and excessive burst
   lengths, full-buffer burst length, and atomic rejection.
-- Fifty-one permanent error-injection tests pass.
+- Fifty-seven permanent error-injection tests pass. New coverage checks parity
+  and checksum-weight coverage, bounded rejection, the 2^32 bound, and atomic
+  rejection of buffers outside the RNG's addressable range.
+- Random positions and mixed-pattern choices use multiply-high rejection
+  sampling rather than low-bit modulo selection. The 13-of-24-bit Floyd vector
+  is `2E E9 AC`, ending at RNG state `0x436C41A3`.
 
 ### Frame handling
 
@@ -197,9 +234,18 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
   independently selects each frame with the configured seeded probability,
   applies the selected error pattern after calculating the FCS, and reports
   clean/injected counts plus its own elapsed time, CPU time, and peak RSS.
+- Its error-pattern dispatcher is declared in `sender_errors.h` and implemented
+  in `sender_errors.c`. The random-pattern test includes headers and links only
+  this module and `error_injection.c`; it does not include `sender.c` or rename
+  the application's main function.
 - `receiver` validates complete records, writes only accepted unpadded payload,
   and reports accepted/rejected counts plus its own elapsed time, CPU time,
   and peak RSS.
+- `process_metrics.c` reads Linux `/proc/self/status` `VmHWM` so peak RSS
+  excludes inherited Python launcher memory. CPU measurements retain
+  `getrusage()`. Linux procfs must be readable.
+- Compiler-generated dependencies rebuild objects and consumers after header
+  changes. Smoke tests keep their outputs separate from the recorded campaign.
 - Command-line schemes are `checksum`, `crc8`, `crc10`, `crc16`, and `crc32`.
   Error modes are `none`, `single`, `two`, `odd`, `burst`, and `random`.
 
@@ -211,16 +257,34 @@ Demonstration: **10–14 August 2026**. Report submission: **17–21 August 2026
 - `run_experiments.py` starts sender/receiver pairs, uses reproducible seeds,
   validates lossless controls and frame-count invariants, combines both
   processes' metrics, and records input/output sizes.
+- Result replacement and append stage complete validated batches before atomic
+  rename. Receiver startup and transfer waits are bounded; failures stop and
+  reap the receiver. The two-input Make campaign commits only after both phases
+  succeed. Existing CSV contents survive failed runs.
+- Append continues each group's repeat number and base-seed offset, rejecting
+  changed input path, byte count, or error denominator. Aggregation also checks
+  those fields in every repeat. Same-path, same-size fixture edits are not
+  detected, so retain the original experiment inputs.
+- Rejected sender dispatch operations preserve caller RNG state by committing
+  a local generator copy only after successful mutation. The local VS Code
+  receiver launch now uses exactly its three supported arguments and writes
+  under `output_files/`.
 - `plot_results.py` uses only the Python standard library to aggregate repeats
   and produce mixed-frame outcome, undetected-rate, execution-time, and
   sender/receiver resource SVGs.
 - `C/results/experiments_mixed.csv` contains the final 450-run campaign: 20
   repeats of four mixed error patterns on 1 MiB and 10 no-error resource
   controls on 8 MiB for all five schemes.
-- The seeded probability-one-half campaign produced 7,055 paired injected
-  frames for each two-byte scheme and pattern. Observed misses were 33 checksum
-  burst frames, 60 CRC-8 two-bit frames, and 11 CRC-10 two-bit frames; CRC-16
+- The repaired November 13 campaign produced 7,055 paired injected frames for
+  each two-byte scheme and pattern. Observed misses were 164 checksum two-bit,
+  38 checksum odd-bit, 31 checksum burst, 77 CRC-8 two-bit, and 9 CRC-10 two-bit
+  frames; CRC-16
   and CRC-32 had no observed misses in this sample.
+- Required-case tables now give marginal intersection bounds and verify paired
+  seeds, fixtures, repeat identities, and injection counts. The checksum-only
+  two-bit intersection is bounded by 0--9; exact per-frame overlaps were not
+  retained. Deterministic evaluation fixtures independently prove all three
+  required categories.
 - Every 8 MiB no-error control reproduced its input byte-for-byte. Detection
   rate is rejected divided by injected frames, never divided by all received
   frames.
@@ -244,9 +308,10 @@ Run from the repository root:
 make -C C test
 ```
 
-Current result: 99 C checks pass: seven checksum, thirteen CRC, fifty-four
+Current result: 104 C checks pass: seven checksum, thirteen CRC, fifty-seven
 error-injection, seventeen frame, five socket, and three direct evaluation
-comparisons. Ten Python validation/report/runner tests also pass. Builds use
+comparisons, plus two sender dispatch/random-pattern checks. Twenty-six Python
+validation/report/runner tests also pass. Builds use
 `-std=c17 -Wall -Wextra -Wpedantic -Werror` and validate `config.h` as part of
 the normal `all` and `test` targets.
 
@@ -262,6 +327,14 @@ Additional verification completed:
 - syntax validation of Python tools and structural/XML validation of the four
   generated SVG plots.
 
+The November 13 repair was verified with failing-then-passing regressions for
+sampling coverage, sender mixed-pattern coverage, inherited RSS, missing header
+dependencies, checksum misses in comparison summaries, and unpaired seeds.
+Allocating 128 MiB in the Python parent now leaves sender/receiver peaks near
+2.2 MiB (2268--2284 KiB in the reproduction), rather than inflating them by
+128 MiB. An independent core-code review found no actionable issues.
+Verification can be repeated with the commands above.
+
 ## Reproduce the Final Evaluation
 
 Run from the repository root:
@@ -271,7 +344,23 @@ make -C C experiments_inference
 make -C C results
 ```
 
-The experiment target replaces the CSV with 450 new rows. The `results` target
+The experiment target replaces the CSV with 450 new rows only after both input
+phases and validation succeed. The follow-up fixes preserved the recorded
+450-row dataset; only separate smoke campaigns were run. The `results` target
 validates that campaign, regenerates all four SVGs, and rebuilds the Markdown
-report from its template. The remaining project work is demonstration rehearsal
-and submission packaging.
+report from its template. This refreshes evidence for the current implementation;
+it does not resolve the audit's pending assignment points.
+
+## Remaining work
+
+1. Explicitly request the coordinated 46-byte minimum-payload code repair, or
+   obtain an instructor clarification resolving that independent PDF rule.
+2. Clarify the two-byte length field's intended meaning and whether polynomial
+   input requires arbitrary coefficients beyond the four named choices.
+3. Obtain any separate report-format instructions; until then, keep formatting
+   pending and use the existing technical report as a working document.
+4. Verify CLion's Makefile project load interactively if needed; setup guidance
+   is in README, but no successful UI load has been observed.
+5. After compliance decisions and any code changes, rerun affected tests and
+   campaign evidence, finalize the report, rehearse the demonstration, package
+   the submission, and verify the requested Drive upload separately.

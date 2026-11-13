@@ -31,6 +31,24 @@ bool error_injection_rng_seed(
 );
 
 /**
+ * @brief Samples [0, bound) using multiply-high mapping with rejection.
+ *
+ * `bound` must fit size_t and be in [1, 2^32]. Consumes one or more LCG
+ * values, avoiding its weak low bits and modulo bias. Invalid inputs leave
+ * the RNG and output unchanged. A bound of one still consumes one value.
+ *
+ * @param[in,out] rng Initialized generator state.
+ * @param[in] bound Exclusive upper bound.
+ * @param[out] value Sampled value.
+ * @return Whether a value was produced.
+ */
+bool error_injection_rng_bounded(
+  error_injection_rng_t *rng,
+  size_t bound,
+  size_t *value
+);
+
+/**
  * @brief Selects a frame with reproducible probability `1 / denominator`.
  *
  * A denominator of one always selects the frame without advancing `rng`.
@@ -53,6 +71,7 @@ bool error_injection_select_frame(
  *
  * Uses and advances the supplied generator state. No data or generator state
  * is modified when the input is invalid.
+ * Random mutation buffers are limited to 2^32 bits and must also fit size_t.
  *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.

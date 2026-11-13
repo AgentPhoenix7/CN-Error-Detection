@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections import defaultdict
 from math import isfinite
 from pathlib import Path
@@ -211,6 +212,13 @@ def summarize_rows(rows: list[dict[str, str]]) -> list[dict[str, str | float | i
     summaries: list[dict[str, str | float | int]] = []
 
     for (scheme, pattern), group_rows in grouped.items():
+        for field in ("input_file", "input_bytes", "error_interval"):
+            values = {
+                row[field] if field == "input_file" else int(row[field])
+                for row in group_rows
+            }
+            if len(values) != 1:
+                raise ValueError(f"inconsistent {field} within {scheme}/{pattern} repeats")
         times = [float(row["receiver_elapsed_seconds"]) for row in group_rows]
         frames_injected = sum(int(row["frames_injected"]) for row in group_rows)
         frames_rejected = sum(int(row["frames_rejected"]) for row in group_rows)
@@ -220,6 +228,11 @@ def summarize_rows(rows: list[dict[str, str]]) -> list[dict[str, str | float | i
                 "scheme": scheme,
                 "error_pattern": pattern,
                 "runs": len(group_rows),
+                "trial_signature": json.dumps(sorted(
+                    (row["input_file"], int(row["input_bytes"]), int(row["repeat"]),
+                     int(row["seed"], 0), int(row["error_interval"]), int(row["frames_injected"]))
+                    for row in group_rows
+                )),
                 "input_file": group_rows[0]["input_file"],
                 "error_interval": int(group_rows[0]["error_interval"]),
                 "frames_clean": sum(int(row["frames_clean"]) for row in group_rows),
@@ -322,11 +335,17 @@ def validate_complete_campaign(
     if len({float(summary["input_bytes"]) for summary in controls}) != 1:
         raise ValueError("inconsistent control input sizes")
 
+    if len({str(summary["input_file"]) for summary in injected}) != 1:
+        raise ValueError("inconsistent injected-pattern input files")
+
+    if len({str(summary["input_file"]) for summary in controls}) != 1:
+        raise ValueError("inconsistent control input files")
+
 
 def required_comparisons(
     summaries: list[dict[str, str | float | int]],
 ) -> list[dict[str, str | int]]:
-    """Derive the three assignment-required aggregate comparison cases."""
+    """Bound required-case intersections from paired aggregate marginals."""
     definitions = (
         ("Both detect", "single", "crc16"),
         ("Checksum only", "two", "crc10"),
@@ -348,6 +367,8 @@ def required_comparisons(
             trials != crc_trials
             or int(checksum["runs"]) != int(crc["runs"])
             or int(checksum["error_interval"]) != int(crc["error_interval"])
+            or checksum.get("trial_signature") is None
+            or checksum["trial_signature"] != crc.get("trial_signature")
         ):
             raise ValueError(f"unpaired aggregate trials for required case {case}")
 
@@ -355,17 +376,14 @@ def required_comparisons(
         crc_detected = int(crc["frames_rejected"])
 
         if case == "Both detect":
-            if checksum_detected != trials or crc_detected != trials:
-                raise ValueError("both-detect aggregate is not fully detected")
-            case_count = trials
+            lower = max(0, checksum_detected + crc_detected - trials)
+            upper = min(checksum_detected, crc_detected)
         elif case == "Checksum only":
-            if checksum_detected != trials:
-                raise ValueError("checksum-only aggregate has checksum misses")
-            case_count = trials - crc_detected
+            lower = max(0, checksum_detected - crc_detected)
+            upper = min(checksum_detected, trials - crc_detected)
         else:
-            if crc_detected != trials:
-                raise ValueError("CRC-only aggregate has CRC misses")
-            case_count = trials - checksum_detected
+            lower = max(0, crc_detected - checksum_detected)
+            upper = min(crc_detected, trials - checksum_detected)
 
         comparisons.append(
             {
@@ -375,8 +393,19 @@ def required_comparisons(
                 "trials": trials,
                 "checksum_detected": checksum_detected,
                 "crc_detected": crc_detected,
-                "case_count": case_count,
+                "case_count_min": lower,
+                "case_count_max": upper,
             }
         )
 
     return comparisons
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Validate a complete experiment campaign.")
+    parser.add_argument("results", type=Path)
+    arguments = parser.parse_args()
+    validate_complete_campaign(load_summaries(arguments.results))
+    print(f"Validated complete campaign: {arguments.results}")

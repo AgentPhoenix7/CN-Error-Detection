@@ -72,6 +72,7 @@ def campaign_summaries() -> list[dict[str, str | float | int]]:
                     "scheme": scheme,
                     "error_pattern": pattern,
                     "runs": 1,
+                    "trial_signature": "paired-test",
                     "input_file": "input_files/detection.bin",
                     "error_interval": 2,
                     "frames_clean": 10,

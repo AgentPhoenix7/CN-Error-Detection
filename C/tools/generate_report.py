@@ -130,17 +130,20 @@ def required_cases_table(
     """Render the three assignment-required aggregate comparison cases."""
     lines = [
         "| Required case | Pattern | CRC | Trials | Checksum detected | "
-        "CRC detected | Case count |",
+        "CRC detected | Case count bounds |",
         "| --- | --- | --- | ---: | ---: | ---: | ---: |",
     ]
     for comparison in required_comparisons(summaries):
+        lower = int(comparison["case_count_min"])
+        upper = int(comparison["case_count_max"])
+        count = f"{lower:,}" if lower == upper else f"{lower:,}--{upper:,}"
         lines.append(
             f"| {comparison['case']} | {comparison['pattern']} | "
             f"{scheme_label(str(comparison['crc_scheme']))} | "
             f"{int(comparison['trials']):,} | "
             f"{int(comparison['checksum_detected']):,} | "
             f"{int(comparison['crc_detected']):,} | "
-            f"{int(comparison['case_count']):,} |"
+            f"{count} |"
         )
     return "\n".join(lines)
 

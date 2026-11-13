@@ -545,7 +545,7 @@ static int test_reproduce_random_bit(void)
 
   if (
     rng.state != UINT32_C(0x75432777) ||
-    data[0] != UINT8_C(0x01)
+    data[0] != UINT8_C(0x10)
   ) {
     fputs("FAIL: random-bit result was not reproducible\n", stderr);
     return 1;
@@ -699,7 +699,7 @@ static int test_reproduce_random_two_bits(void)
 
   if (
     rng.state != UINT32_C(0xCD305E6A) ||
-    data[0] != UINT8_C(0x21)
+    data[0] != UINT8_C(0x12)
   ) {
     fputs("FAIL: random two-bit result was not reproducible\n", stderr);
     return 1;
@@ -854,7 +854,7 @@ static int test_reproduce_random_odd_bits(void)
 
   if (
     rng.state != UINT32_C(0x25DBFAC1) ||
-    data[0] != UINT8_C(0x61)
+    data[0] != UINT8_C(0x64)
   ) {
     fputs("FAIL: random odd-bit result was not reproducible\n", stderr);
     return 1;
@@ -1163,10 +1163,10 @@ static int test_reselect_duplicate_random_odd_bits(void)
   }
 
   if (
-    rng.state != UINT32_C(0x6EDA88C8) ||
-    data[0] != UINT8_C(0xE3) ||
-    data[1] != UINT8_C(0x4D) ||
-    data[2] != UINT8_C(0xB8)
+    rng.state != UINT32_C(0x436C41A3) ||
+    data[0] != UINT8_C(0x2E) ||
+    data[1] != UINT8_C(0xE9) ||
+    data[2] != UINT8_C(0xAC)
   ) {
     fputs("FAIL: duplicate odd-bit reselection was not reproducible\n", stderr);
     return 1;
@@ -1202,8 +1202,8 @@ static int test_reproduce_random_burst(void)
 
   if (
     rng.state != UINT32_C(0x75432777) ||
-    data[0] != UINT8_C(0x01) ||
-    data[1] != UINT8_C(0xFC)
+    data[0] != UINT8_C(0x0F) ||
+    data[1] != UINT8_C(0xE0)
   ) {
     fputs("FAIL: random burst result was not reproducible\n", stderr);
     return 1;
@@ -1527,9 +1527,82 @@ static int test_reject_invalid_frame_selection(void)
   return 0;
 }
 
+static int test_two_bit_sampling_covers_checksum_weights(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0x12345678)};
+  size_t same_parity = 0U;
+  size_t same_weight = 0U;
+  for (size_t trial = 0U; trial < 10000U; trial++) {
+    uint8_t data[1518] = {0};
+    size_t positions[2] = {0};
+    size_t count = 0U;
+    if (!error_injection_flip_random_two_bits(data, sizeof data, &rng)) return 1;
+    for (size_t bit = 0U; bit < sizeof data * 8U; bit++) {
+      if ((data[bit / 8U] & (0x80U >> (bit % 8U))) != 0U) {
+        if (count == 2U) return 1;
+        positions[count++] = bit;
+      }
+    }
+    if (count != 2U || positions[1] - positions[0] <= 1U) return 1;
+    same_parity += positions[0] % 2U == positions[1] % 2U;
+    same_weight += positions[0] % 16U == positions[1] % 16U;
+  }
+  if (same_parity < 4500U || same_parity > 5500U || same_weight < 400U) {
+    fprintf(stderr, "FAIL: biased two-bit sampling: parity=%zu, weight=%zu\n", same_parity, same_weight);
+    return 1;
+  }
+  puts("PASS: two-bit sampling covers parity and checksum weights");
+  return 0;
+}
+
+static int test_bounded_rng_rejection_and_atomicity(void)
+{
+  error_injection_rng_t rng = {UINT32_C(0x12345678)};
+  size_t value = 99U;
+  if (error_injection_rng_bounded(&rng, 0U, &value) ||
+      error_injection_rng_bounded(NULL, 4U, &value) ||
+      error_injection_rng_bounded(&rng, 4U, NULL) ||
+      rng.state != UINT32_C(0x12345678) || value != 99U) return 1;
+  rng.state = UINT32_C(0x25DBFAC1);
+  /* Low products 0x4B5C952C and 0x04DE0E9B are below 0x7FFFFFFF;
+     the third candidate is the first accepted draw. */
+  if (!error_injection_rng_bounded(&rng, (size_t)UINT32_C(0x80000001), &value) ||
+      value != (size_t)UINT32_C(0x7155399F) ||
+      rng.state != UINT32_C(0xE2AA733E)) return 1;
+#if SIZE_MAX > UINT32_MAX
+  const size_t full_range = (size_t)UINT64_C(0x100000000);
+  if (error_injection_rng_bounded(&rng, full_range + 1U, &value) ||
+      rng.state != UINT32_C(0xE2AA733E)) return 1;
+  if (!error_injection_rng_bounded(&rng, full_range, &value) ||
+      value != (size_t)UINT32_C(0xEA0F8185)) return 1;
+#endif
+  puts("PASS: bounded RNG handles rejection, limits, and atomic invalid input");
+  return 0;
+}
+
+static int test_reject_rng_unaddressable_buffers(void)
+{
+#if SIZE_MAX > UINT32_MAX
+  uint8_t data = UINT8_C(0xA5);
+  error_injection_rng_t rng = {UINT32_C(0x12345678)};
+  const size_t length = (size_t)(UINT64_C(0x100000000) / 8U + 1U);
+  if (error_injection_flip_random_bit(&data, length, &rng) ||
+      error_injection_flip_random_two_bits(&data, length, &rng) ||
+      error_injection_flip_random_odd_bits(&data, length, 3U, &rng) ||
+      error_injection_flip_random_burst(&data, length, 7U, &rng) ||
+      data != UINT8_C(0xA5) || rng.state != UINT32_C(0x12345678)) return 1;
+#endif
+  puts("PASS: reject buffers beyond RNG range atomically");
+  return 0;
+}
+
 int main(void)
 {
   int failures = 0;
+
+  failures += test_two_bit_sampling_covers_checksum_weights();
+  failures += test_bounded_rng_rejection_and_atomicity();
+  failures += test_reject_rng_unaddressable_buffers();
 
   failures += test_flip_first_bit();
   failures += test_flip_last_bit();

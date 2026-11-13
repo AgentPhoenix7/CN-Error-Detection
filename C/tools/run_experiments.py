@@ -6,9 +6,17 @@ from __future__ import annotations
 import argparse
 import csv
 import filecmp
+import os
+import selectors
 import socket
 import subprocess
+import tempfile
+import time
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator, TextIO
+
+from experiment_results import load_rows, summarize_rows
 
 
 ALL_SCHEMES = ("checksum", "crc8", "crc10", "crc16", "crc32")
@@ -102,6 +110,24 @@ def portable_path(path: Path, root: Path) -> str:
         return str(path)
 
 
+def wait_for_receiver(receiver: subprocess.Popen, timeout: float = 5.0) -> str:
+    """Read startup output without letting an incomplete line block forever."""
+    assert receiver.stdout is not None
+    output = bytearray()
+    deadline = time.monotonic() + timeout
+    with selectors.DefaultSelector() as selector:
+        selector.register(receiver.stdout, selectors.EVENT_READ)
+        while b"\n" not in output:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not selector.select(remaining):
+                raise subprocess.TimeoutExpired(receiver.args, timeout)
+            chunk = os.read(receiver.stdout.fileno(), 4096)
+            if not chunk:
+                break
+            output.extend(chunk)
+    return output.decode("utf-8")
+
+
 def run_one(
     root: Path,
     input_path: Path,
@@ -139,30 +165,40 @@ def run_one(
         text=True,
     )
 
-    assert receiver.stdout is not None
-    ready_line = receiver.stdout.readline()
-
-    if not ready_line.startswith("Listening on port"):
-        _, stderr = receiver.communicate(timeout=5)
-        raise RuntimeError(
-            f"receiver failed to start for {scheme}/{pattern}: {stderr}"
+    try:
+        ready_output = wait_for_receiver(receiver)
+        if not ready_output.startswith("Listening on port"):
+            _, stderr = receiver.communicate(timeout=5)
+            raise RuntimeError(
+                f"receiver failed to start for {scheme}/{pattern}: {stderr}"
+            )
+        sender = subprocess.run(
+            sender_command, cwd=root, capture_output=True, text=True,
+            timeout=60, check=False,
         )
-
-    sender = subprocess.run(
-        sender_command,
-        cwd=root,
-        capture_output=True,
-        text=True,
-        timeout=60,
-        check=False,
-    )
-    receiver_stdout, receiver_stderr = receiver.communicate(timeout=60)
-
-    if sender.returncode != 0 or receiver.returncode != 0:
-        raise RuntimeError(
-            f"experiment failed for {scheme}/{pattern}\n"
-            f"sender: {sender.stderr}\nreceiver: {receiver_stderr}"
-        )
+        if sender.returncode != 0:
+            raise RuntimeError(
+                f"sender failed for {scheme}/{pattern}: {sender.stderr}"
+            )
+        receiver_stdout, receiver_stderr = receiver.communicate(timeout=60)
+        receiver_stdout = ready_output + receiver_stdout
+        if receiver.returncode != 0:
+            raise RuntimeError(
+                f"receiver failed for {scheme}/{pattern}: {receiver_stderr}"
+            )
+    finally:
+        if receiver.poll() is None:
+            receiver.terminate()
+            try:
+                receiver.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                receiver.kill()
+                receiver.communicate()
+        else:
+            receiver.wait()
+        for stream in (receiver.stdout, receiver.stderr):
+            if stream is not None:
+                stream.close()
 
     sender_metrics = parse_metrics(
         sender.stdout,
@@ -317,25 +353,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def open_results(path: Path, append: bool) -> tuple[object, csv.DictWriter]:
-    """Open a results CSV, rejecting incompatible append schemas."""
-    if append and path.exists() and path.stat().st_size > 0:
-        with path.open(newline="", encoding="utf-8") as source:
-            existing_fields = tuple(next(csv.reader(source)))
-
-        if existing_fields != CSV_FIELDS:
-            raise SystemExit(
-                f"cannot append to CSV with an incompatible schema: {path}"
-            )
-
-    mode = "a" if append else "w"
-    output = path.open(mode, newline="", encoding="utf-8")
-    writer = csv.DictWriter(output, fieldnames=CSV_FIELDS, lineterminator="\n")
-
-    if not append or path.stat().st_size == 0:
+@contextmanager
+def open_results(
+    path: Path, append: bool, *, existing_rows: list[dict[str, str]] | None = None,
+) -> Iterator[tuple[TextIO, csv.DictWriter]]:
+    """Commit a complete validated batch by renaming an adjacent staging file."""
+    if existing_rows is None:
+        existing_rows = load_rows(path) if append and path.exists() else []
+    path.parent.mkdir(parents=True, exist_ok=True)
+    output = tempfile.NamedTemporaryFile(
+        mode="w", newline="", encoding="utf-8", dir=path.parent,
+        prefix=f".{path.name}.", suffix=".tmp", delete=False,
+    )
+    staged_path = Path(output.name)
+    try:
+        writer = csv.DictWriter(output, fieldnames=CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
-
-    return output, writer
+        writer.writerows(existing_rows)
+        yield output, writer
+        output.close()
+        summarize_rows(load_rows(staged_path))
+        staged_path.replace(path)
+    finally:
+        output.close()
+        staged_path.unlink(missing_ok=True)
 
 
 def main() -> None:
@@ -356,40 +397,65 @@ def main() -> None:
     if args.repeats < 1:
         raise SystemExit("--repeats must be positive")
 
-    if args.error_interval < 1:
-        raise SystemExit("--error-interval must be positive")
+    if not 1 <= args.error_interval <= 0xFFFF_FFFF:
+        raise SystemExit("--error-interval must be a positive uint32 value")
+
+    if not 0 <= args.seed <= 0xFFFF_FFFF:
+        raise SystemExit("--seed must be a uint32 value")
+
+    if len(set(args.schemes)) != len(args.schemes) or len(set(args.patterns)) != len(args.patterns):
+        raise SystemExit("duplicate schemes or patterns are not supported")
 
     if not input_path.is_file():
         raise SystemExit(f"input file does not exist: {input_path}")
 
+    if results_path == input_path:
+        raise SystemExit("results destination must differ from the input file")
+
+    suffix = input_path.suffix if input_path.suffix else ".bin"
+    output_paths = {
+        (scheme, pattern): output_directory / (
+            f"{input_path.stem}_{scheme}_{pattern}_received{suffix}"
+        )
+        for scheme in args.schemes for pattern in args.patterns
+    }
+    if any(path.resolve() in (results_path, input_path) for path in output_paths.values()):
+        raise SystemExit("receiver output must differ from results and input paths")
+
+    existing_rows = load_rows(results_path) if args.append and results_path.exists() else []
+    summarize_rows(existing_rows)
+    offsets: dict[tuple[str, str], int] = {}
+    for row in existing_rows:
+        group = (row["scheme"], row["error_pattern"])
+        offsets[group] = max(offsets.get(group, 0), int(row["repeat"]))
+        if group[0] in args.schemes and group[1] in args.patterns:
+            expected_interval = args.error_interval if group[1] != "none" else 0
+            if (row["input_file"] != portable_path(input_path, root)
+                or int(row["input_bytes"]) != input_path.stat().st_size
+                or int(row["error_interval"]) != expected_interval):
+                raise SystemExit(f"incompatible append metadata for {group[0]}/{group[1]}")
+
     subprocess.run(["make", "all"], cwd=root, check=True)
     results_path.parent.mkdir(parents=True, exist_ok=True)
     output_directory.mkdir(parents=True, exist_ok=True)
-    results_file, writer = open_results(results_path, args.append)
-
-    try:
+    with open_results(results_path, args.append, existing_rows=existing_rows) as (results_file, writer):
         for repeat in range(args.repeats):
             for scheme in args.schemes:
                 for pattern in args.patterns:
-                    suffix = input_path.suffix if input_path.suffix else ".bin"
-                    output_path = output_directory / (
-                        f"{input_path.stem}_{scheme}_{pattern}_received{suffix}"
-                    )
+                    output_path = output_paths[(scheme, pattern)]
                     writer.writerow(
                         run_one(
                             root,
                             input_path,
                             scheme,
                             pattern,
-                            repeat + 1,
-                            (args.seed + repeat) & 0xFFFF_FFFF,
+                            offsets.get((scheme, pattern), 0) + repeat + 1,
+                            (args.seed + offsets.get((scheme, pattern), 0) + repeat) & 0xFFFF_FFFF,
                             args.error_interval,
                             output_path,
                         )
                     )
                     results_file.flush()
-    finally:
-        results_file.close()
 
 
 if __name__ == "__main__":

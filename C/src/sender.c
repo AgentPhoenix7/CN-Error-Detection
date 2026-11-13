@@ -2,8 +2,10 @@
 
 #include "config.h"
 #include "error_injection.h"
+#include "sender_errors.h"
 #include "frame.h"
 #include "socket_utils.h"
+#include "process_metrics.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -12,16 +14,6 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <unistd.h>
-
-typedef enum
-{
-  ERROR_PATTERN_NONE,
-  ERROR_PATTERN_SINGLE,
-  ERROR_PATTERN_TWO,
-  ERROR_PATTERN_ODD,
-  ERROR_PATTERN_BURST,
-  ERROR_PATTERN_RANDOM
-} error_pattern_t;
 
 #define SELECTION_SEED_XOR UINT32_C(0x9E3779B9)
 
@@ -109,41 +101,33 @@ static bool sender_parse_error_interval(
 
 static bool sender_parse_error_pattern(
   const char *text,
-  error_pattern_t *pattern
+  sender_error_pattern_t *pattern
 )
 {
-  error_pattern_t parsed_pattern;
+  sender_error_pattern_t parsed_pattern;
 
   if (text == NULL || pattern == NULL) {
     return false;
   }
 
   if (strcmp(text, "none") == 0) {
-    parsed_pattern = ERROR_PATTERN_NONE;
+    parsed_pattern = SENDER_ERROR_PATTERN_NONE;
   } else if (strcmp(text, "single") == 0) {
-    parsed_pattern = ERROR_PATTERN_SINGLE;
+    parsed_pattern = SENDER_ERROR_PATTERN_SINGLE;
   } else if (strcmp(text, "two") == 0) {
-    parsed_pattern = ERROR_PATTERN_TWO;
+    parsed_pattern = SENDER_ERROR_PATTERN_TWO;
   } else if (strcmp(text, "odd") == 0) {
-    parsed_pattern = ERROR_PATTERN_ODD;
+    parsed_pattern = SENDER_ERROR_PATTERN_ODD;
   } else if (strcmp(text, "burst") == 0) {
-    parsed_pattern = ERROR_PATTERN_BURST;
+    parsed_pattern = SENDER_ERROR_PATTERN_BURST;
   } else if (strcmp(text, "random") == 0) {
-    parsed_pattern = ERROR_PATTERN_RANDOM;
+    parsed_pattern = SENDER_ERROR_PATTERN_RANDOM;
   } else {
     return false;
   }
 
   *pattern = parsed_pattern;
   return true;
-}
-
-static uint32_t sender_rng_next(error_injection_rng_t *rng)
-{
-  rng->state =
-    rng->state * UINT32_C(1664525) +
-    UINT32_C(1013904223);
-  return rng->state;
 }
 
 static double sender_timespec_difference(
@@ -164,46 +148,6 @@ static double sender_timeval_difference(
   return
     (double)(end->tv_sec - start->tv_sec) +
     (double)(end->tv_usec - start->tv_usec) / 1000000.0;
-}
-
-static bool sender_apply_error(
-  uint8_t *frame,
-  size_t frame_length,
-  error_pattern_t pattern,
-  error_injection_rng_t *rng
-)
-{
-  if (pattern == ERROR_PATTERN_RANDOM) {
-    pattern = (error_pattern_t)(
-      ERROR_PATTERN_SINGLE + sender_rng_next(rng) % 4U
-    );
-  }
-
-  switch (pattern) {
-    case ERROR_PATTERN_NONE:
-      return true;
-    case ERROR_PATTERN_SINGLE:
-      return error_injection_flip_random_bit(frame, frame_length, rng);
-    case ERROR_PATTERN_TWO:
-      return error_injection_flip_random_two_bits(frame, frame_length, rng);
-    case ERROR_PATTERN_ODD:
-      return error_injection_flip_random_odd_bits(
-        frame,
-        frame_length,
-        3U,
-        rng
-      );
-    case ERROR_PATTERN_BURST:
-      return error_injection_flip_random_burst(
-        frame,
-        frame_length,
-        16U,
-        rng
-      );
-    case ERROR_PATTERN_RANDOM:
-    default:
-      return false;
-  }
 }
 
 static bool sender_send_record(
@@ -240,7 +184,7 @@ int main(int argc, char *argv[])
   uint16_t port = DEFAULT_SERVER_PORT;
   uint32_t seed = UINT32_C(0x12345678);
   frame_fcs_scheme_t scheme;
-  error_pattern_t pattern;
+  sender_error_pattern_t pattern;
   error_injection_rng_t selection_rng;
   error_injection_rng_t error_rng;
   frame_header_t header;
@@ -262,6 +206,7 @@ int main(int argc, char *argv[])
   double elapsed_seconds;
   double user_cpu_seconds;
   double system_cpu_seconds;
+  long peak_rss_kb;
   int socket_fd = -1;
   FILE *input = NULL;
   int status = EXIT_FAILURE;
@@ -347,7 +292,7 @@ int main(int argc, char *argv[])
     inject_frame = false;
 
     if (
-      pattern != ERROR_PATTERN_NONE &&
+      pattern != SENDER_ERROR_PATTERN_NONE &&
       !error_injection_select_frame(
         &selection_rng,
         error_interval,
@@ -359,7 +304,7 @@ int main(int argc, char *argv[])
     }
 
     if (inject_frame) {
-      if (!sender_apply_error(
+      if (!sender_errors_apply(
         serialized_frame,
         serialized_length,
         pattern,
@@ -393,7 +338,8 @@ int main(int argc, char *argv[])
 
   if (
     clock_gettime(CLOCK_MONOTONIC, &end_time) != 0 ||
-    getrusage(RUSAGE_SELF, &end_usage) != 0
+    getrusage(RUSAGE_SELF, &end_usage) != 0 ||
+    !process_metrics_peak_rss_kb(&peak_rss_kb)
   ) {
     perror("sender: finish metrics");
     goto cleanup;
@@ -428,7 +374,7 @@ int main(int argc, char *argv[])
     elapsed_seconds,
     user_cpu_seconds,
     system_cpu_seconds,
-    end_usage.ru_maxrss
+    peak_rss_kb
   );
   status = EXIT_SUCCESS;
 

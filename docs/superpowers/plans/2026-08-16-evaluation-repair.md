@@ -1,12 +1,29 @@
 # Evaluation Repair Implementation Plan
 
+## Status note added November 13, 2026
+
+This historical plan is retained for provenance, not an active list of work to
+redo. Its original RED/GREEN checkboxes do not certify later requirement
+compliance. Follow [the current audit](../../assignment-compliance.md),
+[PROGRESS](../../../PROGRESS.md), and the
+[completed scoped repair](2026-11-13-sampling-memory-build-repair.md).
+
+Current evidence uses the 450-row repaired campaign, multiply-high rejection
+for mutation/pattern choices, Floyd odd subsets, Linux post-exec peak RSS,
+compiler-generated header dependencies, and marginal comparison bounds. Old
+exact-intersection assumptions and low-bit mutation sampling are superseded.
+Keep the user-required one-byte sequence field and accepted 64--1518-byte
+frame range. The 46-byte minimum payload and length/polynomial-input meanings
+remain unresolved; final report formatting is pending because no separate
+rules are available. This plan must not be cited as blanket PDF compliance.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make frame injection PDF-compliant and make every evaluation artifact, including `report.md`, reproducible and mutually consistent.
 
 **Architecture:** Add a tested seeded frame-selection primitive and give the sender independent selection and mutation RNG streams. Centralize CSV validation and aggregation in one Python module consumed by both the plotting and report generators, then rerun the final campaign and regenerate every derived artifact.
 
-**Tech Stack:** C17, POSIX sender/receiver applications, Python 3.11 standard library through uv, Make, Markdown, SVG.
+**Tech Stack:** C17, POSIX sender/receiver applications, Python 3.11+ standard library through uv, Make, Markdown, SVG. No exact Python interpreter is pinned.
 
 ## Global Constraints
 
@@ -277,13 +294,15 @@ test, and current verification commands.
 
 - [ ] **Step 3: Run the complete final campaign**
 
-Run: `UV_CACHE_DIR=/tmp/assignment1-uv-cache make -C C experiments_inference`
+Run from the repository root:
+`make -C C experiments_inference`
 
 Expected: 450 validated data rows covering 20 injected repeats and 10 controls.
 
 - [ ] **Step 4: Regenerate plots and report from the same CSV**
 
-Run: `UV_CACHE_DIR=/tmp/assignment1-uv-cache make -C C results`
+Run from the repository root:
+`make -C C results`
 
 Expected: four SVGs and `report.md` reflect the new random-selection counts and
 contain no pilot/three-repeat language.
@@ -304,7 +323,7 @@ make -C C test_mixed_end_to_end
 - [ ] **Step 2: Run strict static analysis**
 
 Compile every C test/application source set with existing flags plus
-`-fanalyzer`, using temporary binaries under `/tmp`.
+`-fanalyzer`, keeping analysis binaries separate from normal build outputs.
 
 - [ ] **Step 3: Independently audit artifacts**
 

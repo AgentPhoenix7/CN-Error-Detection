@@ -41,11 +41,9 @@
       "cwd": "${workspaceFolder}/C",
       "binaryPath": "${workspaceFolder}/C/build/receiver",
       "binaryArgs": [
-        "received.bin",
+        "output_files/received.bin",
         "crc32",
-        "4321",
-        "results/experiments.csv",
-        "manual"
+        "4321"
       ]
     },
     {

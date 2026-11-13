@@ -1,5 +1,26 @@
 # Evaluation Repair Design
 
+## Status note added November 13, 2026
+
+This is the historical design for seeded frame selection and reproducible
+evaluation, not the current assignment-compliance verdict. See
+[the current audit](../../assignment-compliance.md) and the
+[sampling/memory/build repair](../plans/2026-11-13-sampling-memory-build-repair.md).
+
+The later repair changed bit-position and mixed-pattern sampling to
+multiply-high rejection mapping and Floyd subsets, replaced inherited
+`ru_maxrss` with Linux post-exec `VmHWM`, and made report comparisons use
+marginal intersection bounds. Preserve those corrections when reading the
+original design below; a checksum-only campaign intersection need not be
+known exactly after checksum misses are observed.
+
+The user confirmed 64--1518-byte complete frames and explicitly requires the
+one-byte sequence number despite the PDF's omission. Keep sequence wrap,
+serialization/parsing and FCS protection. There is no receiver continuity/ARQ
+state machine. The independent 46-byte minimum payload, header-length meaning,
+and arbitrary polynomial CLI-input interpretation remain open; separate report
+formatting rules are unavailable and formatting stays pending.
+
 ## Goal
 
 Make the checked-in implementation, experiment evidence, plots, report, README,
