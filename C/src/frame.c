@@ -5,6 +5,12 @@
 
 #include <string.h>
 
+/**
+ * @brief Get the CRC parameters for a given FCS scheme.
+ *
+ * @param scheme The FCS scheme.
+ * @return A pointer to the CRC parameters, or NULL if the scheme is not supported.
+ */
 static const crc_parameters_t *frame_crc_parameters(
   const frame_fcs_scheme_t scheme
 )
@@ -24,12 +30,24 @@ static const crc_parameters_t *frame_crc_parameters(
   }
 }
 
+/**
+ * @brief Write a 16-bit value to a byte array in big-endian format.
+ *
+ * @param output The byte array to write to.
+ * @param value The 16-bit value to write.
+ */
 static void frame_write_uint16(uint8_t *output, const uint16_t value)
 {
   output[0] = (uint8_t)(value >> 8U);
   output[1] = (uint8_t)(value & UINT16_C(0x00FF));
 }
 
+/**
+ * @brief Read a 16-bit value from a byte array in big-endian format.
+ * 
+ * @param input The byte array to read from.
+ * @return The 16-bit value read from the byte array.
+ */
 static uint16_t frame_read_uint16(const uint8_t *input)
 {
   return (uint16_t)(
@@ -38,6 +56,12 @@ static uint16_t frame_read_uint16(const uint8_t *input)
   );
 }
 
+/**
+ * @brief Write a 32-bit value to a byte array in big-endian format.
+ *
+ * @param output The byte array to write to.
+ * @param value The 32-bit value to write.
+ */
 static void frame_write_uint32(uint8_t *output, const uint32_t value)
 {
   output[0] = (uint8_t)(value >> 24U);
@@ -46,6 +70,12 @@ static void frame_write_uint32(uint8_t *output, const uint32_t value)
   output[3] = (uint8_t)value;
 }
 
+/**
+ * @brief Read a 32-bit value from a byte array in big-endian format.
+ *
+ * @param input The byte array to read from.
+ * @return The 32-bit value read from the byte array.
+ */
 static uint32_t frame_read_uint32(const uint8_t *input)
 {
   return
@@ -55,6 +85,14 @@ static uint32_t frame_read_uint32(const uint8_t *input)
     (uint32_t)input[3];
 }
 
+/**
+ * @brief Check if the padding bytes in the payload are all zero.
+ *
+ * @param payload The payload data.
+ * @param payload_length The length of the actual payload data.
+ * @param padded_length The total length of the payload including padding.
+ * @return true if all padding bytes are zero, false otherwise.
+ */
 static bool frame_padding_is_zero(
   const uint8_t *payload,
   const size_t payload_length,
@@ -75,6 +113,13 @@ static bool frame_padding_is_zero(
   return true;
 }
 
+/**
+ * @brief Parse a string representation of an FCS scheme.
+ *
+ * @param text The string to parse.
+ * @param scheme A pointer to the parsed FCS scheme.
+ * @return true if the string was successfully parsed, false otherwise.
+ */
 bool frame_fcs_scheme_parse(
   const char *text,
   frame_fcs_scheme_t *scheme
@@ -104,6 +149,12 @@ bool frame_fcs_scheme_parse(
   return true;
 }
 
+/**
+ * @brief Get the name of an FCS scheme.
+ *
+ * @param scheme The FCS scheme.
+ * @return A pointer to the name of the FCS scheme, or NULL if the scheme is not supported.
+ */
 const char *frame_fcs_scheme_name(const frame_fcs_scheme_t scheme)
 {
   switch (scheme) {
@@ -122,6 +173,13 @@ const char *frame_fcs_scheme_name(const frame_fcs_scheme_t scheme)
   }
 }
 
+/**
+ * @brief Serialize a frame header into a byte array.
+ *
+ * @param header The frame header to serialize.
+ * @param serialized_header The byte array to write the serialized header to.
+ * @return true if the header was successfully serialized, false otherwise.
+ */
 bool frame_header_serialize(
   const frame_header_t *header,
   uint8_t serialized_header[FRAME_HEADER_SIZE]
@@ -162,6 +220,13 @@ bool frame_header_serialize(
   return true;
 }
 
+/**
+ * @brief Parse a serialized frame header.
+ *
+ * @param serialized_header The byte array containing the serialized header.
+ * @param header A pointer to the parsed frame header.
+ * @return true if the header was successfully parsed, false otherwise.
+ */
 bool frame_header_parse(
   const uint8_t serialized_header[FRAME_HEADER_SIZE],
   frame_header_t *header
@@ -198,6 +263,13 @@ bool frame_header_parse(
   return true;
 }
 
+/**
+ * @brief Get the size of the FCS for a given FCS scheme.
+ *
+ * @param scheme The FCS scheme.
+ * @param fcs_size A pointer to the size of the FCS.
+ * @return true if the size was successfully retrieved, false otherwise.
+ */
 bool frame_fcs_size(
   const frame_fcs_scheme_t scheme,
   size_t *fcs_size
@@ -233,6 +305,14 @@ bool frame_fcs_size(
   return true;
 }
 
+/**
+ * @brief Get the padded length of a frame's payload.
+ *
+ * @param payload_length The length of the actual payload.
+ * @param scheme The FCS scheme.
+ * @param padded_length A pointer to the padded length.
+ * @return true if the padded length was successfully calculated, false otherwise.
+ */
 bool frame_padded_payload_length(
   const uint16_t payload_length,
   const frame_fcs_scheme_t scheme,
@@ -265,6 +345,14 @@ bool frame_padded_payload_length(
   return true;
 }
 
+/**
+ * @brief Get the size of a frame on the wire.
+ *
+ * @param payload_length The length of the actual payload.
+ * @param scheme The FCS scheme.
+ * @param frame_size A pointer to the size of the frame.
+ * @return true if the frame size was successfully calculated, false otherwise.
+ */
 bool frame_wire_size(
   const uint16_t payload_length,
   const frame_fcs_scheme_t scheme,
@@ -286,6 +374,17 @@ bool frame_wire_size(
   return true;
 }
 
+/**
+ * @brief Serialize a frame into a byte array.
+ *
+ * @param header The frame header.
+ * @param payload The frame payload.
+ * @param scheme The FCS scheme.
+ * @param serialized_frame The byte array to write the serialized frame to.
+ * @param capacity The capacity of the serialized frame buffer.
+ * @param serialized_length A pointer to the length of the serialized frame.
+ * @return true if the frame was successfully serialized, false otherwise.
+ */
 bool frame_serialize(
   const frame_header_t *header,
   const uint8_t *payload,
@@ -374,6 +473,18 @@ bool frame_serialize(
   return true;
 }
 
+/**
+ * @brief Verify a serialized frame and extract its header and payload.
+ *
+ * @param serialized_frame The byte array containing the serialized frame.
+ * @param serialized_length The length of the serialized frame.
+ * @param scheme The FCS scheme.
+ * @param header A pointer to the parsed frame header.
+ * @param payload A pointer to the buffer to write the extracted payload to.
+ * @param payload_capacity The capacity of the payload buffer.
+ * @param payload_length A pointer to the length of the extracted payload.
+ * @return true if the frame was successfully verified and extracted, false otherwise.
+ */
 bool frame_verify_and_extract(
   const uint8_t *serialized_frame,
   const size_t serialized_length,
