@@ -6,7 +6,7 @@
 #include <string.h>
 
 static const crc_parameters_t *frame_crc_parameters(
-  frame_fcs_scheme_t scheme
+  const frame_fcs_scheme_t scheme
 )
 {
   switch (scheme) {
@@ -24,7 +24,7 @@ static const crc_parameters_t *frame_crc_parameters(
   }
 }
 
-static void frame_write_uint16(uint8_t *output, uint16_t value)
+static void frame_write_uint16(uint8_t *output, const uint16_t value)
 {
   output[0] = (uint8_t)(value >> 8U);
   output[1] = (uint8_t)(value & UINT16_C(0x00FF));
@@ -38,7 +38,7 @@ static uint16_t frame_read_uint16(const uint8_t *input)
   );
 }
 
-static void frame_write_uint32(uint8_t *output, uint32_t value)
+static void frame_write_uint32(uint8_t *output, const uint32_t value)
 {
   output[0] = (uint8_t)(value >> 24U);
   output[1] = (uint8_t)(value >> 16U);
@@ -57,14 +57,12 @@ static uint32_t frame_read_uint32(const uint8_t *input)
 
 static bool frame_padding_is_zero(
   const uint8_t *payload,
-  size_t payload_length,
-  size_t padded_length
+  const size_t payload_length,
+  const size_t padded_length
 )
 {
-  size_t index;
-
   for (
-    index = payload_length;
+    size_t index = payload_length;
     index < padded_length;
     index++
   )
@@ -106,7 +104,7 @@ bool frame_fcs_scheme_parse(
   return true;
 }
 
-const char *frame_fcs_scheme_name(frame_fcs_scheme_t scheme)
+const char *frame_fcs_scheme_name(const frame_fcs_scheme_t scheme)
 {
   switch (scheme) {
     case FRAME_FCS_CHECKSUM16:
@@ -201,7 +199,7 @@ bool frame_header_parse(
 }
 
 bool frame_fcs_size(
-  frame_fcs_scheme_t scheme,
+  const frame_fcs_scheme_t scheme,
   size_t *fcs_size
 )
 {
@@ -236,15 +234,12 @@ bool frame_fcs_size(
 }
 
 bool frame_padded_payload_length(
-  uint16_t payload_length,
-  frame_fcs_scheme_t scheme,
+  const uint16_t payload_length,
+  const frame_fcs_scheme_t scheme,
   size_t *padded_length
 )
 {
   size_t fcs_size;
-  size_t minimum_length;
-  size_t maximum_length;
-  size_t selected_length;
 
   if (
     padded_length == NULL ||
@@ -253,14 +248,14 @@ bool frame_padded_payload_length(
     return false;
   }
 
-  minimum_length = MIN_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
-  maximum_length = MAX_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
+  const size_t minimum_length = MIN_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
+  const size_t maximum_length = MAX_FRAME_SIZE - FRAME_HEADER_SIZE - fcs_size;
 
   if (payload_length > maximum_length) {
     return false;
   }
 
-  selected_length = payload_length;
+  size_t selected_length = payload_length;
 
   if (selected_length < minimum_length) {
     selected_length = minimum_length;
@@ -271,8 +266,8 @@ bool frame_padded_payload_length(
 }
 
 bool frame_wire_size(
-  uint16_t payload_length,
-  frame_fcs_scheme_t scheme,
+  const uint16_t payload_length,
+  const frame_fcs_scheme_t scheme,
   size_t *frame_size
 )
 {
@@ -294,19 +289,14 @@ bool frame_wire_size(
 bool frame_serialize(
   const frame_header_t *header,
   const uint8_t *payload,
-  frame_fcs_scheme_t scheme,
+  const frame_fcs_scheme_t scheme,
   uint8_t *serialized_frame,
-  size_t capacity,
+  const size_t capacity,
   size_t *serialized_length
 )
 {
-  const crc_parameters_t *parameters;
   size_t padded_length;
   size_t fcs_size;
-  size_t frame_size;
-  size_t protected_length;
-  uint8_t *fcs;
-  uint32_t crc;
 
   if (
     header == NULL ||
@@ -323,7 +313,7 @@ bool frame_serialize(
     return false;
   }
 
-  frame_size = FRAME_HEADER_SIZE + padded_length + fcs_size;
+  const size_t frame_size = FRAME_HEADER_SIZE + padded_length + fcs_size;
 
   if (capacity < frame_size) {
     return false;
@@ -345,8 +335,8 @@ bool frame_serialize(
     padded_length - header->payload_length
   );
 
-  protected_length = FRAME_HEADER_SIZE + padded_length;
-  fcs = serialized_frame + protected_length;
+  const size_t protected_length = FRAME_HEADER_SIZE + padded_length;
+  uint8_t* fcs = serialized_frame + protected_length;
 
   if (scheme == FRAME_FCS_CHECKSUM16) {
     frame_write_uint16(
@@ -354,8 +344,8 @@ bool frame_serialize(
       checksum16_compute(serialized_frame, protected_length)
     );
   } else {
-    parameters = frame_crc_parameters(scheme);
-    crc = crc_compute(
+    const crc_parameters_t* parameters = frame_crc_parameters(scheme);
+    const uint32_t crc = crc_compute(
       serialized_frame,
       protected_length,
       parameters
@@ -386,22 +376,17 @@ bool frame_serialize(
 
 bool frame_verify_and_extract(
   const uint8_t *serialized_frame,
-  size_t serialized_length,
-  frame_fcs_scheme_t scheme,
+  const size_t serialized_length,
+  const frame_fcs_scheme_t scheme,
   frame_header_t *header,
   uint8_t *payload,
-  size_t payload_capacity,
+  const size_t payload_capacity,
   size_t *payload_length
 )
 {
-  const crc_parameters_t *parameters;
   frame_header_t parsed_header;
   size_t expected_length;
   size_t padded_length;
-  size_t protected_length;
-  const uint8_t *fcs;
-  uint16_t encoded_crc10;
-  uint32_t received_crc;
   bool valid;
 
   if (
@@ -423,8 +408,8 @@ bool frame_verify_and_extract(
     return false;
   }
 
-  protected_length = FRAME_HEADER_SIZE + padded_length;
-  fcs = serialized_frame + protected_length;
+  const size_t protected_length = FRAME_HEADER_SIZE + padded_length;
+  const uint8_t* fcs = serialized_frame + protected_length;
 
   if (!frame_padding_is_zero(
     serialized_frame + FRAME_HEADER_SIZE,
@@ -441,7 +426,9 @@ bool frame_verify_and_extract(
       frame_read_uint16(fcs)
     );
   } else {
-    parameters = frame_crc_parameters(scheme);
+    uint32_t received_crc;
+    uint16_t encoded_crc10;
+    const crc_parameters_t* parameters = frame_crc_parameters(scheme);
 
     switch (scheme) {
       case FRAME_FCS_CRC8:
