@@ -13,7 +13,7 @@
 /**
  * @brief Stores state for reproducible pseudo-random error selection.
  */
-typedef struct
+typedef struct error_injection_rng_t
 {
   uint32_t state;
 } error_injection_rng_t;

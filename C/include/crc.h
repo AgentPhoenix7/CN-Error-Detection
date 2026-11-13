@@ -13,7 +13,7 @@
 /**
  * @brief Describes a CRC generator polynomial.
  */
-typedef struct
+typedef struct crc_parameters_t
 {
   uint8_t width;        /**< Number of bits in the CRC remainder. */
   uint32_t polynomial; /**< Polynomial without its highest-order term. */

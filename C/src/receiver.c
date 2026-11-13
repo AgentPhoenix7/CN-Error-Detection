@@ -11,7 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
-typedef struct
+typedef struct receiver_metrics_t
 {
   size_t frames_received;
   size_t frames_accepted;

@@ -18,7 +18,7 @@
  * `payload_length` contains the number of valid, unpadded payload bytes in
  * host byte order. Serialization converts it to network byte order.
  */
-typedef struct
+typedef struct frame_header_t
 {
   uint8_t source_mac[MAC_ADDRESS_SIZE];
   uint8_t destination_mac[MAC_ADDRESS_SIZE];
