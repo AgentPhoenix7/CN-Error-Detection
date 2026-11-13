@@ -15,7 +15,7 @@ static uint32_t error_injection_rng_next(
 
 bool error_injection_rng_seed(
   error_injection_rng_t *rng,
-  uint32_t seed
+  const uint32_t seed
 )
 {
   if (rng == NULL) {
@@ -29,12 +29,10 @@ bool error_injection_rng_seed(
 
 bool error_injection_select_frame(
   error_injection_rng_t *rng,
-  uint32_t denominator,
+  const uint32_t denominator,
   bool *selected
 )
 {
-  uint64_t scaled_value;
-
   if (rng == NULL || selected == NULL || denominator == 0U) {
     return false;
   }
@@ -44,8 +42,7 @@ bool error_injection_select_frame(
     return true;
   }
 
-  scaled_value =
-    (uint64_t)error_injection_rng_next(rng) * denominator;
+  const uint64_t scaled_value = (uint64_t)error_injection_rng_next(rng) * denominator;
   *selected = (scaled_value >> 32U) == 0U;
 
   return true;
@@ -53,14 +50,10 @@ bool error_injection_select_frame(
 
 bool error_injection_flip_random_bit(
   uint8_t *data,
-  size_t length,
+  const size_t length,
   error_injection_rng_t *rng
 )
 {
-  size_t bit_count;
-  size_t bit_index;
-  uint32_t random_value;
-
   if (
     data == NULL ||
     rng == NULL ||
@@ -70,9 +63,9 @@ bool error_injection_flip_random_bit(
     return false;
   }
 
-  bit_count = length * 8U;
-  random_value = error_injection_rng_next(rng);
-  bit_index = (size_t)random_value % bit_count;
+  const size_t bit_count = length * 8U;
+  const uint32_t random_value = error_injection_rng_next(rng);
+  const size_t bit_index = (size_t)random_value % bit_count;
 
   return error_injection_flip_bit(
     data,
@@ -83,12 +76,10 @@ bool error_injection_flip_random_bit(
 
 bool error_injection_flip_random_two_bits(
   uint8_t *data,
-  size_t length,
+  const size_t length,
   error_injection_rng_t *rng
 )
 {
-  size_t bit_count;
-  size_t first_bit_index;
   size_t second_bit_index;
   size_t separation;
 
@@ -101,9 +92,8 @@ bool error_injection_flip_random_two_bits(
     return false;
   }
 
-  bit_count = length * 8U;
-  first_bit_index =
-    (size_t)error_injection_rng_next(rng) % bit_count;
+  const size_t bit_count = length * 8U;
+  const size_t first_bit_index = (size_t)error_injection_rng_next(rng) % bit_count;
 
   do {
     second_bit_index =
@@ -126,17 +116,13 @@ bool error_injection_flip_random_two_bits(
 
 bool error_injection_flip_random_odd_bits(
   uint8_t *data,
-  size_t length,
-  size_t bit_count,
+  const size_t length,
+  const size_t bit_count,
   error_injection_rng_t *rng
 )
 {
-  size_t total_bit_count;
   size_t *bit_indices;
-  size_t selected_count;
   size_t previous_index;
-  size_t candidate;
-  bool result;
 
   if (
     data == NULL ||
@@ -149,7 +135,7 @@ bool error_injection_flip_random_odd_bits(
     return false;
   }
 
-  total_bit_count = length * 8U;
+  const size_t total_bit_count = length * 8U;
 
   if (
     bit_count > total_bit_count ||
@@ -164,11 +150,10 @@ bool error_injection_flip_random_odd_bits(
     return false;
   }
 
-  selected_count = 0U;
+  size_t selected_count = 0U;
 
   while (selected_count < bit_count) {
-    candidate =
-      (size_t)error_injection_rng_next(rng) % total_bit_count;
+    const size_t candidate = (size_t)error_injection_rng_next(rng) % total_bit_count;
 
     for (
       previous_index = 0U;
@@ -186,7 +171,7 @@ bool error_injection_flip_random_odd_bits(
     }
   }
 
-  result = error_injection_flip_odd_bits(
+  const bool result = error_injection_flip_odd_bits(
     data,
     length,
     bit_indices,
@@ -200,15 +185,11 @@ bool error_injection_flip_random_odd_bits(
 
 bool error_injection_flip_random_burst(
   uint8_t *data,
-  size_t length,
-  size_t burst_length,
+  const size_t length,
+  const size_t burst_length,
   error_injection_rng_t *rng
 )
 {
-  size_t total_bit_count;
-  size_t valid_start_count;
-  size_t start_bit_index;
-
   if (
     data == NULL ||
     rng == NULL ||
@@ -219,16 +200,14 @@ bool error_injection_flip_random_burst(
     return false;
   }
 
-  total_bit_count = length * 8U;
+  const size_t total_bit_count = length * 8U;
 
   if (burst_length > total_bit_count) {
     return false;
   }
 
-  valid_start_count =
-    total_bit_count - burst_length + 1U;
-  start_bit_index =
-    (size_t)error_injection_rng_next(rng) % valid_start_count;
+  const size_t valid_start_count = total_bit_count - burst_length + 1U;
+  const size_t start_bit_index = (size_t)error_injection_rng_next(rng) % valid_start_count;
 
   return error_injection_flip_burst(
     data,
@@ -240,21 +219,17 @@ bool error_injection_flip_random_burst(
 
 bool error_injection_flip_bit(
   uint8_t *data,
-  size_t length,
-  size_t bit_index
+  const size_t length,
+  const size_t bit_index
 )
 {
-  size_t byte_index;
-  uint8_t bit_offset;
-  uint8_t bit_mask;
-
   if (data == NULL || bit_index / 8U >= length) {
     return false;
   }
 
-  byte_index = bit_index / 8U;
-  bit_offset = (uint8_t)(bit_index % 8U);
-  bit_mask = (uint8_t)(UINT8_C(0x80) >> bit_offset);
+  const size_t byte_index = bit_index / 8U;
+  const uint8_t bit_offset = (uint8_t)(bit_index % 8U);
+  const uint8_t bit_mask = (uint8_t)(UINT8_C(0x80) >> bit_offset);
 
   data[byte_index] ^= bit_mask;
 
@@ -263,9 +238,9 @@ bool error_injection_flip_bit(
 
 bool error_injection_flip_two_bits(
   uint8_t *data,
-  size_t length,
-  size_t first_bit_index,
-  size_t second_bit_index
+  const size_t length,
+  const size_t first_bit_index,
+  const size_t second_bit_index
 )
 {
   if (
@@ -293,13 +268,12 @@ bool error_injection_flip_two_bits(
 
 bool error_injection_flip_odd_bits(
   uint8_t *data,
-  size_t length,
+  const size_t length,
   const size_t *bit_indices,
-  size_t bit_count
+  const size_t bit_count
 )
 {
   size_t index;
-  size_t previous_index;
 
   if (
     data == NULL ||
@@ -321,7 +295,7 @@ bool error_injection_flip_odd_bits(
     }
 
     for (
-      previous_index = 0U;
+      size_t previous_index = 0U;
       previous_index < index;
       previous_index++
     ) {
@@ -349,14 +323,11 @@ bool error_injection_flip_odd_bits(
 
 bool error_injection_flip_burst(
   uint8_t *data,
-  size_t length,
-  size_t start_bit_index,
-  size_t burst_length
+  const size_t length,
+  const size_t start_bit_index,
+  const size_t burst_length
 )
 {
-  size_t final_bit_index;
-  size_t offset;
-
   if (
     data == NULL ||
     burst_length == 0U ||
@@ -366,14 +337,14 @@ bool error_injection_flip_burst(
     return false;
   }
 
-  final_bit_index = start_bit_index + burst_length - 1U;
+  const size_t final_bit_index = start_bit_index + burst_length - 1U;
 
   if (final_bit_index / 8U >= length) {
     return false;
   }
 
   for (
-    offset = 0U;
+    size_t offset = 0U;
     offset < burst_length;
     offset++
   )
