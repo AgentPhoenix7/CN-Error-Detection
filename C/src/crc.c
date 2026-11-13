@@ -22,15 +22,13 @@ const crc_parameters_t crc32_parameters = {
   .polynomial = UINT32_C(0x04C11DB7)
 };
 
-/**
- * static uint32_t crc_width_mask(const uint8_t width)
- * {
- *   assert(width >= 1U);
- *   assert(width <= 32U);
- *
- *   return UINT32_MAX >> (32U - width);
- * }
- */
+// static uint32_t crc_width_mask(const uint8_t width)
+// {
+//   assert(width >= 1U);
+//   assert(width <= 32U);
+//
+//   return UINT32_MAX >> (32U - width);
+// }
 
 static uint32_t crc_width_mask(const uint8_t width)
 {
@@ -72,12 +70,15 @@ uint32_t crc_compute(
       bit_index++
     )
     {
+      // Extract the incoming data bit and outgoing CRC bit
       const bool data_bit_set = (data[byte_index] &
         (UINT8_C(0x80) >> bit_index)) != 0U;
       const bool top_bit_set = (remainder & top_bit_mask) != 0U;
 
+      // Shift the remainder left and apply width_mask
       remainder = (remainder << 1U) & width_mask;
 
+      // Conditional Polynomial XOR
       if (data_bit_set != top_bit_set) {
         remainder ^= parameters->polynomial;
       }
@@ -96,3 +97,80 @@ bool crc_verify(
 {
   return crc_compute(data, length, parameters) == received_crc;
 }
+
+// #include <assert.h>
+// #include <stdbool.h>
+// #include <stddef.h>
+// #include <stdint.h>
+//
+// typedef struct {
+//   uint8_t width;
+//   uint32_t polynomial;
+//   uint32_t initial_value;
+//   uint32_t xor_out;
+//   bool reflect_in;
+//   bool reflect_out;
+// } crc_parameters_t;
+//
+// static uint32_t crc_width_mask(const uint8_t width)
+// {
+//   assert(width >= 1U);
+//   assert(width <= 32U);
+//   return UINT32_MAX >> (32U - width);
+// }
+//
+// static uint32_t crc_reflect_bits(uint32_t value, const uint8_t width)
+// {
+//   uint32_t reflected = 0U;
+//
+//   for (uint8_t i = 0U; i < width; i++) {
+//     if ((value & UINT32_C(1)) != 0U) {
+//       reflected |= UINT32_C(1) << ((width - 1U) - i);
+//     }
+//     value >>= 1U;
+//   }
+//
+//   return reflected;
+// }
+//
+// uint32_t crc_compute(
+//   const uint8_t *data,
+//   const size_t length,
+//   const crc_parameters_t *parameters
+// )
+// {
+//   assert(parameters != NULL);
+//   assert(data != NULL || length == 0U);
+//
+//   const uint32_t width_mask = crc_width_mask(parameters->width);
+//   assert((parameters->polynomial & ~width_mask) == 0U);
+//   assert((parameters->initial_value & ~width_mask) == 0U);
+//   assert((parameters->xor_out & ~width_mask) == 0U);
+//
+//   const uint32_t top_bit_mask = UINT32_C(1) << (parameters->width - 1U);
+//   uint32_t remainder = parameters->initial_value;
+//
+//   for (size_t byte_index = 0U; byte_index < length; byte_index++) {
+//     for (uint8_t bit_index = 0U; bit_index < 8U; bit_index++) {
+//       // Read LSB-first when reflect_in is true; MSB-first otherwise
+//       const uint8_t bit_mask = parameters->reflect_in
+//         ? (uint8_t)(UINT8_C(0x01) << bit_index)
+//         : (uint8_t)(UINT8_C(0x80) >> bit_index);
+//
+//       const bool data_bit_set = (data[byte_index] & bit_mask) != 0U;
+//       const bool top_bit_set = (remainder & top_bit_mask) != 0U;
+//
+//       remainder = (remainder << 1U) & width_mask;
+//
+//       if (data_bit_set != top_bit_set) {
+//         remainder ^= parameters->polynomial;
+//       }
+//     }
+//   }
+//
+//   if (parameters->reflect_out) {
+//     remainder = crc_reflect_bits(remainder, parameters->width);
+//   }
+//
+//   return (remainder ^ parameters->xor_out) & width_mask;
+// }
