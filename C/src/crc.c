@@ -95,7 +95,9 @@ bool crc_verify(
   const crc_parameters_t *parameters
 )
 {
-  return crc_compute(data, length, parameters) == received_crc;
+  assert(parameters != NULL);
+  const uint32_t width_mask = crc_width_mask(parameters->width);
+  return crc_compute(data, length, parameters) == (received_crc & width_mask);
 }
 
 // #include <assert.h>
