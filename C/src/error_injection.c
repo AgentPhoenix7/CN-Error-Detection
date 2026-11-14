@@ -232,11 +232,9 @@ bool error_injection_flip_random_odd_bits(
     return false;
   }
 
-  size_t selected_count = 0U;
-
   /* Floyd's algorithm selects a distinct subset with exactly bit_count draws
      (apart from bounded-mapping rejection), even for near-full subsets. */
-  for (selected_count = 0U; selected_count < bit_count; selected_count++) {
+  for (size_t selected_count = 0U; selected_count < bit_count; selected_count++) {
     const size_t current_bound = total_bit_count - bit_count + selected_count;
     size_t candidate = 0U;
     (void)error_injection_rng_bounded(rng, current_bound + 1U, &candidate);
@@ -336,8 +334,8 @@ bool error_injection_flip_bit(
  * @brief Toggles two distinct specified bits without partial invalid
  * mutations.
  *
- * Validates both indices and their distinctness before invoking the single-
- * bit primitive for each position.
+ * Validates both indices and their distinctness before invoking the single-bit
+ * primitive for each position.
  */
 bool error_injection_flip_two_bits(
   uint8_t *data,
