@@ -10,6 +10,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/**
+ * @brief Formats a TCP port as a bounded decimal service string.
+ *
+ * Writes the unsigned port with snprintf into six bytes and rejects an error
+ * or truncated result before address resolution uses it.
+ */
 static bool socket_utils_format_port(
   uint16_t port,
   char output[6]
@@ -21,6 +27,13 @@ static bool socket_utils_format_port(
   return written > 0 && written < 6;
 }
 
+/**
+ * @brief Opens a TCP connection to a named or numeric host.
+ *
+ * Resolves candidate addresses with getaddrinfo, tries socket/connect for
+ * each, closes failed descriptors, frees the address list, and returns the
+ * successful descriptor or -1.
+ */
 int socket_utils_connect(const char *host, uint16_t port)
 {
   struct addrinfo hints;
@@ -73,6 +86,13 @@ int socket_utils_connect(const char *host, uint16_t port)
   return socket_fd;
 }
 
+/**
+ * @brief Creates a reusable TCP listener on a local interface.
+ *
+ * Resolves passive addresses, tries sockets with SO_REUSEADDR, binds and
+ * listens with the supplied backlog, and closes unsuccessful candidates
+ * before returning.
+ */
 int socket_utils_listen(uint16_t port, int backlog)
 {
   struct addrinfo hints;
@@ -138,6 +158,12 @@ int socket_utils_listen(uint16_t port, int backlog)
   return listener;
 }
 
+/**
+ * @brief Accepts one TCP client despite interrupted system calls.
+ *
+ * Repeats accept while it fails with EINTR and returns the resulting
+ * connected descriptor or failure code.
+ */
 int socket_utils_accept(int listener)
 {
   int socket_fd;
@@ -149,6 +175,12 @@ int socket_utils_accept(int listener)
   return socket_fd;
 }
 
+/**
+ * @brief Transmits an entire buffer over a connected stream socket.
+ *
+ * Loops over partial send results, retries EINTR, suppresses SIGPIPE where
+ * MSG_NOSIGNAL is available, and fails on other errors or a zero-byte send.
+ */
 bool socket_utils_send_all(
   int socket_fd,
   const uint8_t *data,
@@ -189,6 +221,14 @@ bool socket_utils_send_all(
   return true;
 }
 
+/**
+ * @brief Reads an exact-length buffer while distinguishing EOF from
+ * truncation.
+ *
+ * Accumulates partial recv results, retries EINTR, returns clean EOF only
+ * before any requested byte arrives, and treats an incomplete record as an
+ * error.
+ */
 socket_receive_result_t socket_utils_receive_all(
   int socket_fd,
   uint8_t *data,

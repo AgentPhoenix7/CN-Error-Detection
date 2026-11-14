@@ -4,6 +4,9 @@
 from pathlib import Path
 
 
+# Creates a reproducible sequence of fixture bytes. Advances the fixed 32-bit
+# LCG once per byte and appends the high eight state bits to a bytearray before
+# returning bytes.
 def lcg_bytes(length: int, seed: int) -> bytes:
     """Return deterministic bytes using the assignment's fixed LCG."""
     output = bytearray()
@@ -16,6 +19,9 @@ def lcg_bytes(length: int, seed: int) -> bytes:
     return bytes(output)
 
 
+# Writes a large reproducible binary fixture with bounded memory. Maintains LCG
+# state across chunks of at most 65536 bytes and writes each chunk until the
+# requested length is reached.
 def write_lcg_file(path: Path, length: int, seed: int) -> None:
     """Write a large deterministic fixture without keeping it all in memory."""
     chunk_size = 65_536
@@ -35,6 +41,9 @@ def write_lcg_file(path: Path, length: int, seed: int) -> None:
             remaining -= chunk_length
 
 
+# Writes an exact-size reproducible text fixture. Repeats an ASCII paragraph
+# containing the supplied label and truncates its last chunk to the remaining
+# byte count.
 def write_text_file(path: Path, length: int, label: str) -> None:
     """Write an exact-size, deterministic, human-readable experiment input."""
     paragraph = (
@@ -51,6 +60,9 @@ def write_text_file(path: Path, length: int, label: str) -> None:
             remaining -= len(chunk)
 
 
+# Creates the project's deterministic fixtures and transfer inputs. Ensures the
+# data/input/output directories exist, writes empty and small fixtures, then
+# generates the fixed seeded binary and labeled text files.
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     test_data = root / "test_data"

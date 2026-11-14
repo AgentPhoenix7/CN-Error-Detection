@@ -11,6 +11,10 @@ from pathlib import Path
 SCHEMES = {"checksum", "crc8", "crc10", "crc16", "crc32"}
 
 
+# Checks the seeded three-frame mixed-transfer smoke results. Loads one CSV,
+# requires every scheme exactly once, checks the pinned
+# sent/received/injected/clean counts, and verifies all outcome-accounting
+# identities.
 def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: validate_mixed_csv.py CSV_PATH")

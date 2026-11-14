@@ -13,6 +13,9 @@
 /**
  * @brief Calculates the 16-bit one's-complement checksum of a byte array.
  *
+ * Adds big-endian 16-bit words with end-around carry, treats a final odd
+ * byte as a word's high byte, then complements the folded sum.
+ *
  * @param[in] data Pointer to the input bytes. It may be `NULL` only when
  *                 `length` is zero.
  * @param[in] length Number of bytes in `data`.
@@ -28,6 +31,9 @@ uint16_t checksum16_compute(
 
 /**
  * @brief Verifies data against a received 16-bit checksum.
+ *
+ * Recovers the folded data sum from checksum16_compute(), adds the received
+ * checksum with end-around carry, and requires an all-ones result.
  *
  * @param[in] data Pointer to the received data bytes. It may be `NULL` only
  *                 when `length` is zero.

@@ -27,6 +27,8 @@ PLACEHOLDERS = (
 )
 
 
+# Returns the report's readable name for a scheme. Looks up the command-line
+# scheme key in a fixed mapping to Checksum and CRC labels.
 def scheme_label(scheme: str) -> str:
     """Return the report label for one command-line scheme name."""
     labels = {
@@ -39,6 +41,8 @@ def scheme_label(scheme: str) -> str:
     return labels[scheme]
 
 
+# Returns a readable label for an injected error pattern. Maps the four pattern
+# keys to their single-bit, two-bit, three-bit, or 16-bit-burst descriptions.
 def pattern_label(pattern: str) -> str:
     """Return the report label for one injected error pattern."""
     labels = {
@@ -50,6 +54,9 @@ def pattern_label(pattern: str) -> str:
     return labels[pattern]
 
 
+# Describes the validated campaign's size and sampling setup. Uses
+# representative error/control summaries and the total run count to format
+# input sizes, repeats, and the selection denominator.
 def campaign_summary(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -73,6 +80,9 @@ def campaign_summary(
     )
 
 
+# Builds a Markdown table of pooled injected-run outcomes. Sums clean,
+# injected, rejected and undetected counts across patterns for each scheme and
+# divides detections by injected frames.
 def outcome_table(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -99,6 +109,9 @@ def outcome_table(
     return "\n".join(lines)
 
 
+# Builds the per-scheme undetected-error table. Looks up each injected
+# pattern's summary and formats missed counts, trial counts, and percentages
+# into one row per scheme.
 def pattern_table(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -124,6 +137,9 @@ def pattern_table(
     return "\n".join(lines)
 
 
+# Builds the table of required paired comparison bounds. Formats
+# required_comparisons() results, showing a single exact count when bounds
+# agree or a range when intersections are unknown.
 def required_cases_table(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -148,6 +164,9 @@ def required_cases_table(
     return "\n".join(lines)
 
 
+# Builds the clean-control elapsed-time comparison. Uses each scheme's no-error
+# summary and converts sender/receiver means and receiver standard deviation
+# from seconds to milliseconds.
 def timing_table(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -169,6 +188,9 @@ def timing_table(
     return "\n".join(lines)
 
 
+# Builds the clean-control CPU and memory comparison. Formats each scheme's
+# separate sender/receiver mean CPU seconds as milliseconds and peak resident
+# memory as KiB.
 def resource_table(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -192,6 +214,9 @@ def resource_table(
     return "\n".join(lines)
 
 
+# Describes every scheme/pattern group with observed misses. Scans injected
+# summaries in stable scheme/pattern order, lists nonzero missed/trial counts,
+# or emits the no-observed-miss sentence.
 def observed_misses(
     summaries: list[dict[str, str | float | int]],
 ) -> str:
@@ -213,6 +238,9 @@ def observed_misses(
     return "Observed undetected frames were " + "; ".join(entries) + "."
 
 
+# Renders a deterministic report with validated campaign data. Checks campaign
+# completeness, replaces each required placeholder exactly once, rejects
+# unknown tokens, and prepends the regeneration/source notice.
 def render_report(
     template_text: str,
     summaries: list[dict[str, str | float | int]],
@@ -254,6 +282,9 @@ def render_report(
     return notice + rendered
 
 
+# Writes the generated report from a CSV and prose template. Loads validated
+# summaries and UTF-8 template text, renders the report, creates its parent
+# directory, and writes the resulting Markdown.
 def generate_report(
     csv_path: Path,
     template_path: Path,
@@ -270,6 +301,9 @@ def generate_report(
     output_path.write_text(rendered, encoding="utf-8")
 
 
+# Reads the three report-generator file paths from the command line. Defines
+# positional CSV, template, and output arguments with argparse and converts
+# them to Path objects.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv_path", type=Path)
@@ -278,6 +312,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Runs the report-generation command. Parses the input/output paths and passes
+# them to generate_report().
 def main() -> None:
     args = parse_args()
     generate_report(args.csv_path, args.template_path, args.output_path)

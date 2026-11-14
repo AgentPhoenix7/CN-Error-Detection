@@ -2,6 +2,12 @@
 
 #include <stdlib.h>
 
+/**
+ * @brief Advances and returns the reproducible generator state.
+ *
+ * Applies the fixed linear congruential recurrence with uint32_t wraparound,
+ * updating the caller-owned state in place.
+ */
 static uint32_t error_injection_rng_next(
   error_injection_rng_t *rng
 )
@@ -13,6 +19,13 @@ static uint32_t error_injection_rng_next(
   return rng->state;
 }
 
+/**
+ * @brief Selects an integer below a bound without low-bit modulo bias.
+ *
+ * Validates a bound in [1, 2^32], multiplies each 32-bit generator value by
+ * it, rejects incomplete low-product buckets, and returns the product's high
+ * 32 bits.
+ */
 bool error_injection_rng_bounded(
   error_injection_rng_t *rng,
   const size_t bound,
@@ -35,6 +48,13 @@ bool error_injection_rng_bounded(
   return true;
 }
 
+/**
+ * @brief Checks whether a buffer fits the random selector's bit-address
+ * range.
+ *
+ * Rejects empty buffers, byte-to-bit size_t overflow, and lengths exceeding
+ * 2^32 bits before storing length multiplied by eight.
+ */
 static bool error_injection_is_valid_random_bit_length(
   const size_t length,
   size_t *total_bit_count
@@ -48,6 +68,12 @@ static bool error_injection_is_valid_random_bit_length(
   return true;
 }
 
+/**
+ * @brief Initializes a caller-owned reproducible generator.
+ *
+ * Rejects a null state pointer and otherwise copies the supplied seed
+ * directly into its 32-bit state field.
+ */
 bool error_injection_rng_seed(
   error_injection_rng_t *rng,
   const uint32_t seed
@@ -62,6 +88,13 @@ bool error_injection_rng_seed(
   return true;
 }
 
+/**
+ * @brief Decides whether the current frame should receive an injected error.
+ *
+ * Selects every frame without a draw for denominator one; otherwise advances
+ * the generator once and selects bucket zero of a multiply-high scaled
+ * denominator range.
+ */
 bool error_injection_select_frame(
   error_injection_rng_t *rng,
   const uint32_t denominator,
@@ -83,6 +116,12 @@ bool error_injection_select_frame(
   return true;
 }
 
+/**
+ * @brief Flips one reproducibly selected bit in a buffer.
+ *
+ * Validates the buffer and RNG, samples a bounded MSB-first bit index, and
+ * delegates the mutation to error_injection_flip_bit().
+ */
 bool error_injection_flip_random_bit(
   uint8_t *data,
   const size_t length,
@@ -108,6 +147,12 @@ bool error_injection_flip_random_bit(
   );
 }
 
+/**
+ * @brief Flips two reproducibly selected nonadjacent bits.
+ *
+ * Draws two bounded positions until their absolute difference exceeds one,
+ * then delegates both validated flips to error_injection_flip_two_bits().
+ */
 bool error_injection_flip_random_two_bits(
   uint8_t *data,
   const size_t length,
@@ -146,6 +191,13 @@ bool error_injection_flip_random_two_bits(
   );
 }
 
+/**
+ * @brief Flips a requested positive odd number of distinct random bits.
+ *
+ * Checks counts and allocation size, builds a distinct subset with Floyd
+ * sampling and collision substitution, applies the controlled odd-bit
+ * operation, and frees the temporary indices.
+ */
 bool error_injection_flip_random_odd_bits(
   uint8_t *data,
   const size_t length,
@@ -215,6 +267,12 @@ bool error_injection_flip_random_odd_bits(
   return result;
 }
 
+/**
+ * @brief Flips a contiguous burst at a reproducibly selected valid position.
+ *
+ * Validates the requested length, samples among starts where the entire
+ * burst fits, and delegates the mutation to error_injection_flip_burst().
+ */
 bool error_injection_flip_random_burst(
   uint8_t *data,
   const size_t length,
@@ -248,6 +306,13 @@ bool error_injection_flip_random_burst(
   );
 }
 
+/**
+ * @brief Toggles one specified MSB-first bit in a byte buffer.
+ *
+ * Checks the byte index without multiplying the buffer length, derives the
+ * byte offset and shifted 0x80 mask, and XORs that mask into the selected
+ * byte.
+ */
 bool error_injection_flip_bit(
   uint8_t *data,
   const size_t length,
@@ -267,6 +332,13 @@ bool error_injection_flip_bit(
   return true;
 }
 
+/**
+ * @brief Toggles two distinct specified bits without partial invalid
+ * mutations.
+ *
+ * Validates both indices and their distinctness before invoking the single-
+ * bit primitive for each position.
+ */
 bool error_injection_flip_two_bits(
   uint8_t *data,
   const size_t length,
@@ -297,6 +369,12 @@ bool error_injection_flip_two_bits(
   return true;
 }
 
+/**
+ * @brief Toggles a positive odd set of distinct specified positions.
+ *
+ * Checks the count, bounds, and duplicate indices in a validation pass, then
+ * flips all positions in a separate mutation pass.
+ */
 bool error_injection_flip_odd_bits(
   uint8_t *data,
   const size_t length,
@@ -352,6 +430,12 @@ bool error_injection_flip_odd_bits(
   return true;
 }
 
+/**
+ * @brief Toggles every bit in one specified contiguous range.
+ *
+ * Checks nonzero length, addition overflow, and both endpoints before
+ * visiting each position with the single-bit primitive.
+ */
 bool error_injection_flip_burst(
   uint8_t *data,
   const size_t length,

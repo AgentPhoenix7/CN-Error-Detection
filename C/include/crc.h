@@ -42,6 +42,10 @@ extern const crc_parameters_t crc32_parameters;
 /**
  * @brief Calculates a CRC remainder for a byte array.
  *
+ * Starts with a zero remainder, shifts in each data bit using the top-bit
+ * feedback, XORs the lower generator polynomial when feedback is set, and
+ * masks to the configured width.
+ *
  * @param[in] data Pointer to the input bytes. It may be `NULL` only when
  *                 `length` is zero.
  * @param[in] length Number of bytes in `data`.
@@ -59,6 +63,9 @@ uint32_t crc_compute(
 
 /**
  * @brief Verifies data against a received CRC remainder.
+ *
+ * Recomputes the CRC with the same polynomial and compares it with the
+ * received remainder after masking that value to the configured width.
  *
  * @param[in] data Pointer to the received data. It may be `NULL` only when
  *                 `length` is zero.

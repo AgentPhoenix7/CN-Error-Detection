@@ -2,6 +2,12 @@
 
 #include <stdio.h>
 
+/**
+ * @brief Checks a predefined CRC's width and lower polynomial.
+ *
+ * Compares the supplied parameter object's fields against the expected
+ * constants and reports the named scheme's result.
+ */
 static int test_parameters(
   const char *name,
   const crc_parameters_t *parameters,
@@ -21,6 +27,12 @@ static int test_parameters(
   return 0;
 }
 
+/**
+ * @brief Checks the zero initial CRC remainder for empty data.
+ *
+ * Calls crc_compute with NULL, zero length, and CRC-32 parameters and
+ * compares the result with zero.
+ */
 static int test_empty_input(void)
 {
   const uint32_t expected = 0U;
@@ -42,6 +54,12 @@ static int test_empty_input(void)
   return 0;
 }
 
+/**
+ * @brief Checks the CRC-8 polynomial implementation against a known vector.
+ *
+ * Processes the nine ASCII digits 123456789 without the string terminator
+ * and requires remainder 0xBC.
+ */
 static int test_crc8_known_vector(void)
 {
   const uint8_t data[] = "123456789";
@@ -68,6 +86,12 @@ static int test_crc8_known_vector(void)
   return 0;
 }
 
+/**
+ * @brief Checks the CRC-10 polynomial implementation against a known vector.
+ *
+ * Processes the nine ASCII digits 123456789 without the string terminator
+ * and requires remainder 0x199.
+ */
 static int test_crc10_known_vector(void)
 {
   const uint8_t data[] = "123456789";
@@ -94,6 +118,12 @@ static int test_crc10_known_vector(void)
   return 0;
 }
 
+/**
+ * @brief Checks the CRC-16 polynomial implementation against a known vector.
+ *
+ * Processes the nine ASCII digits 123456789 without the string terminator
+ * and requires remainder 0xFEE8.
+ */
 static int test_crc16_known_vector(void)
 {
   const uint8_t data[] = "123456789";
@@ -120,6 +150,12 @@ static int test_crc16_known_vector(void)
   return 0;
 }
 
+/**
+ * @brief Checks the CRC-32 polynomial implementation against a known vector.
+ *
+ * Processes the nine ASCII digits 123456789 without the string terminator
+ * and requires remainder 0x89A1897F.
+ */
 static int test_crc32_known_vector(void)
 {
   const uint8_t data[] = "123456789";
@@ -146,6 +182,12 @@ static int test_crc32_known_vector(void)
   return 0;
 }
 
+/**
+ * @brief Checks acceptance of a correct CRC-8 remainder.
+ *
+ * Verifies the ASCII digit vector against its known remainder 0xBC and
+ * requires success.
+ */
 static int test_valid_crc8_verification(void)
 {
   const uint8_t data[] = "123456789";
@@ -165,6 +207,12 @@ static int test_valid_crc8_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks CRC-8 detection of a data-bit error.
+ *
+ * Toggles one bit in the digit vector while retaining the original remainder
+ * and requires verification to fail.
+ */
 static int test_corrupted_data_verification(void)
 {
   uint8_t data[] = "123456789";
@@ -186,6 +234,12 @@ static int test_corrupted_data_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks CRC-8 detection of a remainder-bit error.
+ *
+ * Keeps the digit vector intact, changes one bit of its transmitted CRC, and
+ * requires verification to fail.
+ */
 static int test_corrupted_crc_verification(void)
 {
   const uint8_t data[] = "123456789";
@@ -207,6 +261,12 @@ static int test_corrupted_crc_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks CRC verification for empty input.
+ *
+ * Verifies NULL data with zero length and zero received remainder using
+ * CRC-32 parameters and requires success.
+ */
 static int test_empty_verification(void)
 {
   if (!crc_verify(
@@ -223,6 +283,12 @@ static int test_empty_verification(void)
   return 0;
 }
 
+/**
+ * @brief Runs this module's tests and reports an overall process status.
+ *
+ * Calls each test helper, accumulates its failure count, and returns zero
+ * only when every check passes.
+ */
 int main(void)
 {
   int failures = 0;

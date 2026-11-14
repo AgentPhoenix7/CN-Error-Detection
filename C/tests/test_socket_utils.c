@@ -6,6 +6,12 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+/**
+ * @brief Checks an exact binary transfer through the socket helpers.
+ *
+ * Creates a connected socket pair, sends the fixed byte vector, receives its
+ * full length, compares bytes, and closes both descriptors.
+ */
 static int test_send_and_receive_all(void)
 {
   const uint8_t sent[] = {
@@ -47,6 +53,12 @@ static int test_send_and_receive_all(void)
   return 0;
 }
 
+/**
+ * @brief Checks that EOF before any record bytes is reported distinctly.
+ *
+ * Closes one endpoint of a socket pair before receiving and requires
+ * SOCKET_RECEIVE_EOF from the remaining endpoint.
+ */
 static int test_receive_clean_eof(void)
 {
   uint8_t output;
@@ -81,6 +93,12 @@ static int test_receive_clean_eof(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a truncated socket record is treated as an error.
+ *
+ * Sends two bytes, shuts down the writer, requests three bytes, and requires
+ * SOCKET_RECEIVE_ERROR rather than clean EOF.
+ */
 static int test_reject_partial_record_eof(void)
 {
   const uint8_t sent[] = {UINT8_C(0xAA), UINT8_C(0xBB)};
@@ -119,6 +137,12 @@ static int test_reject_partial_record_eof(void)
   return 0;
 }
 
+/**
+ * @brief Checks that empty socket operations accept null buffers.
+ *
+ * Uses a connected socket pair to send and receive zero bytes with NULL data
+ * and requires both operations to succeed.
+ */
 static int test_zero_length_operations(void)
 {
   int sockets[2];
@@ -148,6 +172,12 @@ static int test_zero_length_operations(void)
   return 0;
 }
 
+/**
+ * @brief Checks argument validation before socket operations.
+ *
+ * Passes invalid descriptors, null nonempty buffers, a null host, and a zero
+ * backlog to the helpers and requires their documented failure results.
+ */
 static int test_reject_invalid_socket_inputs(void)
 {
   uint8_t byte = UINT8_C(0);
@@ -170,6 +200,12 @@ static int test_reject_invalid_socket_inputs(void)
   return 0;
 }
 
+/**
+ * @brief Runs this module's tests and reports an overall process status.
+ *
+ * Calls each test helper, accumulates its failure count, and returns zero
+ * only when every check passes.
+ */
 int main(void)
 {
   int failures = 0;

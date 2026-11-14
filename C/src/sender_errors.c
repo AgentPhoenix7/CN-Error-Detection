@@ -1,5 +1,13 @@
 #include "sender_errors.h"
 
+/**
+ * @brief Applies the sender's chosen corruption pattern to a serialized
+ * frame.
+ *
+ * Treats none as a no-op, chooses a random mode when requested, dispatches
+ * single/two/three/burst mutations using a local RNG copy, and commits state
+ * only after success.
+ */
 bool sender_errors_apply(
   uint8_t *frame,
   size_t frame_length,

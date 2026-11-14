@@ -17,6 +17,12 @@
 
 #define SELECTION_SEED_XOR UINT32_C(0x9E3779B9)
 
+/**
+ * @brief Prints the sender's supported command-line arguments.
+ *
+ * Formats the executable name, available schemes, error modes, and
+ * selection-denominator explanation to standard error.
+ */
 static void sender_print_usage(const char *program)
 {
   fprintf(
@@ -31,6 +37,12 @@ static void sender_print_usage(const char *program)
   );
 }
 
+/**
+ * @brief Parses a nonzero decimal TCP port safely.
+ *
+ * Uses strtoul in base ten, checks errno, trailing characters and uint16_t
+ * bounds, then assigns the port only on success.
+ */
 static bool sender_parse_port(const char *text, uint16_t *port)
 {
   char *end;
@@ -56,6 +68,12 @@ static bool sender_parse_port(const char *text, uint16_t *port)
   return true;
 }
 
+/**
+ * @brief Parses a uint32_t seed with standard numeric base prefixes.
+ *
+ * Uses strtoul with base zero, rejects conversion errors, trailing
+ * characters and out-of-range values, and stores the validated seed.
+ */
 static bool sender_parse_seed(const char *text, uint32_t *seed)
 {
   char *end;
@@ -76,6 +94,12 @@ static bool sender_parse_seed(const char *text, uint32_t *seed)
   return true;
 }
 
+/**
+ * @brief Parses the positive uint32_t frame-selection denominator.
+ *
+ * Uses decimal strtoul, checks conversion errors and the full value's
+ * bounds, and stores the result only after validating it.
+ */
 static bool sender_parse_error_interval(
   const char *text,
   uint32_t *error_interval
@@ -99,6 +123,12 @@ static bool sender_parse_error_interval(
   return true;
 }
 
+/**
+ * @brief Converts an error-mode name into the sender's pattern enum.
+ *
+ * Compares the text against none, single, two, odd, burst, and random, then
+ * commits the matched temporary enum to the caller.
+ */
 static bool sender_parse_error_pattern(
   const char *text,
   sender_error_pattern_t *pattern
@@ -130,6 +160,12 @@ static bool sender_parse_error_pattern(
   return true;
 }
 
+/**
+ * @brief Converts the difference between monotonic timestamps to seconds.
+ *
+ * Subtracts seconds and adds the nanosecond difference divided by one
+ * billion as a double.
+ */
 static double sender_timespec_difference(
   const struct timespec *start,
   const struct timespec *end
@@ -140,6 +176,13 @@ static double sender_timespec_difference(
     (double)(end->tv_nsec - start->tv_nsec) / 1000000000.0;
 }
 
+/**
+ * @brief Converts a pair of resource-usage timestamps to elapsed CPU
+ * seconds.
+ *
+ * Subtracts seconds and adds the microsecond difference divided by one
+ * million as a double.
+ */
 static double sender_timeval_difference(
   const struct timeval *start,
   const struct timeval *end
@@ -150,6 +193,12 @@ static double sender_timeval_difference(
     (double)(end->tv_usec - start->tv_usec) / 1000000.0;
 }
 
+/**
+ * @brief Sends a simulated frame with its TCP record-length prefix.
+ *
+ * Checks the length fits uint16_t, writes its two big-endian prefix bytes,
+ * and sends prefix and frame completely; zero length sends the end marker.
+ */
 static bool sender_send_record(
   int socket_fd,
   const uint8_t *frame,
@@ -170,6 +219,14 @@ static bool sender_send_record(
     socket_utils_send_all(socket_fd, frame, frame_length);
 }
 
+/**
+ * @brief Transfers an input file as optionally corrupted protected frames.
+ *
+ * Parses the CLI, connects TCP, chunks by the selected FCS capacity,
+ * serializes sequenced frames, selects and applies seeded errors, sends
+ * length-prefixed records and an end marker, then reports metrics and closes
+ * resources.
+ */
 int main(int argc, char *argv[])
 {
   static const uint8_t source_mac[MAC_ADDRESS_SIZE] = {

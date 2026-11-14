@@ -17,6 +17,8 @@ from experiment_results import (
 )
 
 
+# Starts a consistently styled SVG document. Returns the sized SVG root, white
+# background, and centered title after HTML-escaping the title text.
 def svg_document(title: str, width: int, height: int) -> list[str]:
     """Return the shared SVG header and title elements."""
     return [
@@ -28,6 +30,9 @@ def svg_document(title: str, width: int, height: int) -> list[str]:
     ]
 
 
+# Writes an SVG matrix of pooled miss percentages. Looks up each scheme/pattern
+# rate, scales cell colors against the maximum, and labels the grid with rates
+# and sampling context.
 def write_undetected_error_matrix(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
@@ -119,6 +124,9 @@ def write_undetected_error_matrix(
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
 
+# Writes an SVG comparison of clean, detected, and undetected frames. Pools
+# injected-pattern counts by scheme, draws proportional stacked segments, and
+# labels the categories and totals for interpretation.
 def write_frame_outcomes_chart(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
@@ -321,6 +329,9 @@ def write_frame_outcomes_chart(
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
 
+# Writes the clean-control receiver elapsed-time chart. Looks up no-error
+# summaries, scales mean times to chart coordinates, and draws labeled bars
+# with standard-deviation error markers.
 def write_control_timing_chart(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
@@ -414,6 +425,9 @@ def write_control_timing_chart(
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
 
+# Writes an SVG table of clean-control process resources. Formats separate
+# sender/receiver mean CPU times in milliseconds and peak RSS in KiB, adding
+# input-size and repeat context.
 def write_resource_summary(
     summaries: list[dict[str, str | float | int]], output_path: Path
 ) -> None:
@@ -472,6 +486,8 @@ def write_resource_summary(
     output_path.write_text("\n".join(elements) + "\n", encoding="utf-8")
 
 
+# Reads the plot source CSV and destination directory. Defines two positional
+# Path arguments with argparse and returns their parsed values.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv_path", type=Path)
@@ -479,6 +495,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Generates all four plots from one validated campaign. Loads and validates
+# complete summaries, creates the destination directory, and calls each SVG
+# writer with its standard output filename.
 def main() -> None:
     args = parse_args()
     summaries = load_summaries(args.csv_path)

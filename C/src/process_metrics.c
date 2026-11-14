@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Reads this executable's peak resident memory in KiB.
+ *
+ * Scans /proc/self/status for VmHWM, validates its positive numeric value
+ * and kB unit, checks file errors, and commits the output only on success.
+ */
 bool process_metrics_peak_rss_kb(long *peak_rss_kb)
 {
   char line[256];

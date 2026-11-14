@@ -52,6 +52,8 @@ CSV_FIELDS = (
 )
 
 
+# Finds a currently unused loopback TCP port. Binds a temporary socket to port
+# zero, reads the assigned port, and closes the probe before returning it.
 def available_port() -> int:
     """Ask the operating system for a currently unused loopback TCP port."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
@@ -59,6 +61,9 @@ def available_port() -> int:
         return int(probe.getsockname()[1])
 
 
+# Converts one process's metrics line into named numeric fields. Finds the
+# requested prefix, checks the comma-separated field count, and parses the
+# integer and floating fields in the declared order.
 def parse_metrics(
     output: str,
     prefix: str,
@@ -102,6 +107,9 @@ def parse_metrics(
     return metrics
 
 
+# Chooses a durable path representation for a CSV field. Returns a path
+# relative to the C project root when possible and falls back to the supplied
+# path when it lies outside that root.
 def portable_path(path: Path, root: Path) -> str:
     """Prefer a repository-relative path in durable CSV output."""
     try:
@@ -110,6 +118,9 @@ def portable_path(path: Path, root: Path) -> str:
         return str(path)
 
 
+# Waits for receiver startup output without an unbounded line read. Uses a
+# selector and monotonic deadline to read pipe bytes until newline or EOF,
+# raising TimeoutExpired when startup takes too long.
 def wait_for_receiver(receiver: subprocess.Popen, timeout: float = 5.0) -> str:
     """Read startup output without letting an incomplete line block forever."""
     assert receiver.stdout is not None
@@ -128,6 +139,10 @@ def wait_for_receiver(receiver: subprocess.Popen, timeout: float = 5.0) -> str:
     return output.decode("utf-8")
 
 
+# Executes one sender/receiver trial and returns validated CSV metrics. Starts
+# a receiver, waits with a deadline, runs the sender, reaps the receiver on
+# every exit path, checks frame identities and clean-file equality, and
+# combines process measurements.
 def run_one(
     root: Path,
     input_path: Path,
@@ -307,6 +322,9 @@ def run_one(
     }
 
 
+# Reads the experiment input, selected matrix, and output options. Uses
+# argparse to define paths, scheme/pattern choices, repeats, base seed,
+# selection denominator and append mode with their defaults.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="input file sent by the sender")
@@ -335,6 +353,7 @@ def parse_args() -> argparse.Namespace:
         default=list(ALL_PATTERNS),
     )
     parser.add_argument("--repeats", type=int, default=3)
+    # Accept decimal or prefixed seed text by letting int() infer its base.
     parser.add_argument("--seed", type=lambda value: int(value, 0), default=0x12345678)
     parser.add_argument(
         "--error-interval",
@@ -353,6 +372,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Stages a whole CSV batch and commits it only on successful validation. Copies
+# existing rows when appending, yields a writer for an adjacent temporary file,
+# validates the finished data, atomically renames it, and removes abandoned
+# staging files.
 @contextmanager
 def open_results(
     path: Path, append: bool, *, existing_rows: list[dict[str, str]] | None = None,
@@ -379,6 +402,10 @@ def open_results(
         staged_path.unlink(missing_ok=True)
 
 
+# Runs the requested experiment matrix safely and reproducibly. Preflights
+# ranges, path collisions and append metadata, continues per-group repeat/seed
+# offsets, ensures binaries/directories exist, and writes trials through the
+# CSV transaction.
 def main() -> None:
     args = parse_args()
     root = Path(__file__).resolve().parents[1]

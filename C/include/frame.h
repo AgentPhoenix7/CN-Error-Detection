@@ -43,6 +43,9 @@ typedef enum
  *
  * Accepted names are `checksum`, `crc8`, `crc10`, `crc16`, and `crc32`.
  *
+ * Compares the input against the five supported names and assigns a
+ * temporary enum to the output only after a match.
+ *
  * @param[in] text Scheme name.
  * @param[out] scheme Parsed scheme, unchanged on failure.
  * @return `true` when the name is supported; otherwise `false`.
@@ -55,6 +58,9 @@ bool frame_fcs_scheme_parse(
 /**
  * @brief Returns the stable command-line name of a scheme.
  *
+ * Uses a switch to return a static string for each enum value or NULL for an
+ * unsupported value.
+ *
  * @param[in] scheme Error-detection scheme.
  * @return Static name string, or `NULL` for an unsupported value.
  */
@@ -66,6 +72,10 @@ const char *frame_fcs_scheme_name(frame_fcs_scheme_t scheme);
  * Fields are written in header order, and `payload_length` is converted from
  * host byte order to network byte order. No output is modified when either
  * pointer is `NULL` or `payload_length` exceeds `MAX_PAYLOAD_SIZE`.
+ *
+ * Validates the pointers and length, copies source and destination MAC
+ * bytes, writes the true payload length big-endian, and appends the sequence
+ * byte.
  *
  * @param[in] header Logical header fields to serialize.
  * @param[out] serialized_header Buffer of `FRAME_HEADER_SIZE` bytes.
@@ -82,6 +92,9 @@ bool frame_header_serialize(
  * The output is unchanged when either pointer is `NULL` or the encoded
  * payload length exceeds `MAX_PAYLOAD_SIZE`.
  *
+ * Copies MAC fields, decodes the big-endian payload length and sequence byte
+ * into a temporary structure, then commits it only if the length is allowed.
+ *
  * @param[in] serialized_header Buffer containing `FRAME_HEADER_SIZE` bytes.
  * @param[out] header Parsed logical header.
  * @return `true` when the header is valid; otherwise `false`.
@@ -94,6 +107,9 @@ bool frame_header_parse(
 /**
  * @brief Returns the serialized FCS size for a supported scheme.
  *
+ * Maps the scheme enum to its configured checksum or CRC size and assigns
+ * the output only after validation.
+ *
  * @param[in] scheme Error-detection scheme.
  * @param[out] fcs_size Serialized FCS size in bytes.
  * @return `true` for a supported scheme; otherwise `false`.
@@ -105,6 +121,10 @@ bool frame_fcs_size(
 
 /**
  * @brief Calculates the transmitted payload size after zero padding.
+ *
+ * Subtracts header and FCS bytes from the configured frame bounds, rejects
+ * oversized payloads, and raises shorter payloads to the scheme's minimum
+ * size.
  *
  * @param[in] payload_length Actual unpadded payload length.
  * @param[in] scheme Error-detection scheme.
@@ -120,6 +140,9 @@ bool frame_padded_payload_length(
 
 /**
  * @brief Calculates the complete serialized frame size.
+ *
+ * Obtains the selected FCS size and validated padded payload length, then
+ * adds those to the fixed header size; the TCP record prefix is excluded.
  *
  * @param[in] payload_length Actual unpadded payload length.
  * @param[in] scheme Error-detection scheme.
@@ -138,6 +161,10 @@ bool frame_wire_size(
  * The FCS covers the serialized header and complete padded payload. CRC-10 is
  * left-aligned in its two-byte field. Output arguments are unchanged when an
  * input is invalid or the output capacity is insufficient.
+ *
+ * Validates size and capacity, writes the header and true payload, zero-
+ * fills padding, computes the FCS over header plus padded payload, and
+ * encodes it with CRC-10 left-aligned.
  *
  * @param[in] header Logical header whose length matches the payload.
  * @param[in] payload Actual unpadded payload bytes.
@@ -161,6 +188,10 @@ bool frame_serialize(
  *
  * Parsed outputs are unchanged unless the frame has a valid structure and
  * FCS. CRC-10 fields with nonzero padding bits are rejected.
+ *
+ * Parses into temporary fields, checks exact size, capacity and zero
+ * padding, decodes and verifies the FCS, then commits outputs; CRC-10 also
+ * requires six zero padding bits.
  *
  * @param[in] serialized_frame Complete serialized frame.
  * @param[in] serialized_length Number of received bytes.

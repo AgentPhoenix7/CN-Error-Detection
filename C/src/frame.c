@@ -8,6 +8,9 @@
 /**
  * @brief Get the CRC parameters for a given FCS scheme.
  *
+ * Uses a switch to return the matching CRC-8, CRC-10, CRC-16, or CRC-32
+ * constant; checksum and unsupported values return NULL.
+ *
  * @param scheme The FCS scheme.
  * @return A pointer to the CRC parameters, or NULL if the scheme is not supported.
  */
@@ -33,6 +36,9 @@ static const crc_parameters_t *frame_crc_parameters(
 /**
  * @brief Write a 16-bit value to a byte array in big-endian format.
  *
+ * Stores the high byte first and the masked low byte second using shifts and
+ * casts rather than copying host memory.
+ *
  * @param output The byte array to write to.
  * @param value The 16-bit value to write.
  */
@@ -44,7 +50,10 @@ static void frame_write_uint16(uint8_t *output, const uint16_t value)
 
 /**
  * @brief Read a 16-bit value from a byte array in big-endian format.
- * 
+ *
+ * Promotes and shifts the first byte by eight bits, then combines it with
+ * the second byte using bitwise OR.
+ *
  * @param input The byte array to read from.
  * @return The 16-bit value read from the byte array.
  */
@@ -58,6 +67,9 @@ static uint16_t frame_read_uint16(const uint8_t *input)
 
 /**
  * @brief Write a 32-bit value to a byte array in big-endian format.
+ *
+ * Extracts bytes with right shifts of 24, 16, eight, and zero bits and
+ * stores them from most to least significant.
  *
  * @param output The byte array to write to.
  * @param value The 32-bit value to write.
@@ -73,6 +85,9 @@ static void frame_write_uint32(uint8_t *output, const uint32_t value)
 /**
  * @brief Read a 32-bit value from a byte array in big-endian format.
  *
+ * Promotes each byte before shifting it to its 24-, 16-, eight-, or zero-bit
+ * position and combines the parts with bitwise OR.
+ *
  * @param input The byte array to read from.
  * @return The 32-bit value read from the byte array.
  */
@@ -87,6 +102,9 @@ static uint32_t frame_read_uint32(const uint8_t *input)
 
 /**
  * @brief Check if the padding bytes in the payload are all zero.
+ *
+ * Scans the bytes from the true payload length up to the padded length and
+ * rejects the first nonzero value.
  *
  * @param payload The payload data.
  * @param payload_length The length of the actual payload data.
@@ -115,6 +133,9 @@ static bool frame_padding_is_zero(
 
 /**
  * @brief Parse a string representation of an FCS scheme.
+ *
+ * Compares the input against the five supported names and assigns a
+ * temporary enum to the output only after a match.
  *
  * @param text The string to parse.
  * @param scheme A pointer to the parsed FCS scheme.
@@ -152,6 +173,9 @@ bool frame_fcs_scheme_parse(
 /**
  * @brief Get the name of an FCS scheme.
  *
+ * Uses a switch to return a static string for each enum value or NULL for an
+ * unsupported value.
+ *
  * @param scheme The FCS scheme.
  * @return A pointer to the name of the FCS scheme, or NULL if the scheme is not supported.
  */
@@ -175,6 +199,10 @@ const char *frame_fcs_scheme_name(const frame_fcs_scheme_t scheme)
 
 /**
  * @brief Serialize a frame header into a byte array.
+ *
+ * Validates the pointers and length, copies source and destination MAC
+ * bytes, writes the true payload length big-endian, and appends the sequence
+ * byte.
  *
  * @param header The frame header to serialize.
  * @param serialized_header The byte array to write the serialized header to.
@@ -223,6 +251,9 @@ bool frame_header_serialize(
 /**
  * @brief Parse a serialized frame header.
  *
+ * Copies MAC fields, decodes the big-endian payload length and sequence byte
+ * into a temporary structure, then commits it only if the length is allowed.
+ *
  * @param serialized_header The byte array containing the serialized header.
  * @param header A pointer to the parsed frame header.
  * @return true if the header was successfully parsed, false otherwise.
@@ -266,6 +297,9 @@ bool frame_header_parse(
 /**
  * @brief Get the size of the FCS for a given FCS scheme.
  *
+ * Maps the scheme enum to its configured checksum or CRC size and assigns
+ * the output only after validation.
+ *
  * @param scheme The FCS scheme.
  * @param fcs_size A pointer to the size of the FCS.
  * @return true if the size was successfully retrieved, false otherwise.
@@ -308,6 +342,10 @@ bool frame_fcs_size(
 /**
  * @brief Get the padded length of a frame's payload.
  *
+ * Subtracts header and FCS bytes from the configured frame bounds, rejects
+ * oversized payloads, and raises shorter payloads to the scheme's minimum
+ * size.
+ *
  * @param payload_length The length of the actual payload.
  * @param scheme The FCS scheme.
  * @param padded_length A pointer to the padded length.
@@ -348,6 +386,9 @@ bool frame_padded_payload_length(
 /**
  * @brief Get the size of a frame on the wire.
  *
+ * Obtains the selected FCS size and validated padded payload length, then
+ * adds those to the fixed header size; the TCP record prefix is excluded.
+ *
  * @param payload_length The length of the actual payload.
  * @param scheme The FCS scheme.
  * @param frame_size A pointer to the size of the frame.
@@ -376,6 +417,10 @@ bool frame_wire_size(
 
 /**
  * @brief Serialize a frame into a byte array.
+ *
+ * Validates size and capacity, writes the header and true payload, zero-
+ * fills padding, computes the FCS over header plus padded payload, and
+ * encodes it with CRC-10 left-aligned.
  *
  * @param header The frame header.
  * @param payload The frame payload.
@@ -475,6 +520,10 @@ bool frame_serialize(
 
 /**
  * @brief Verify a serialized frame and extract its header and payload.
+ *
+ * Parses into temporary fields, checks exact size, capacity and zero
+ * padding, decodes and verifies the FCS, then commits outputs; CRC-10 also
+ * requires six zero padding bits.
  *
  * @param serialized_frame The byte array containing the serialized frame.
  * @param serialized_length The length of the serialized frame.

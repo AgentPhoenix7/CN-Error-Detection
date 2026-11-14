@@ -26,6 +26,10 @@ typedef enum
  * generator. None is a no-op and does not consume RNG state.
  * Rejected operations leave both frame bytes and caller RNG state unchanged.
  *
+ * Treats none as a no-op, chooses a random mode when requested, dispatches
+ * single/two/three/burst mutations using a local RNG copy, and commits state
+ * only after success.
+ *
  * @param[in,out] frame Serialized frame to corrupt.
  * @param[in] frame_length Frame size in bytes.
  * @param[in] pattern Selected error pattern.

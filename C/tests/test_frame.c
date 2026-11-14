@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Checks the exact serialized header layout and network byte order.
+ *
+ * Serializes distinct MAC addresses, payload length 0x0123 and sequence
+ * 0x7E, then compares every byte against the fixed wire vector.
+ */
 static int test_serialize_header(void)
 {
   const frame_header_t header = {
@@ -67,6 +73,12 @@ static int test_serialize_header(void)
   return 0;
 }
 
+/**
+ * @brief Checks encoding of the largest logical header payload length.
+ *
+ * Serializes MAX_PAYLOAD_SIZE and inspects the two length bytes for the
+ * expected big-endian value.
+ */
 static int test_serialize_maximum_payload_length(void)
 {
   const frame_header_t header = {
@@ -97,6 +109,12 @@ static int test_serialize_maximum_payload_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks atomic rejection of a missing logical header.
+ *
+ * Fills the output with a sentinel, serializes a NULL header, and requires
+ * failure without any changed output byte.
+ */
 static int test_reject_null_header(void)
 {
   uint8_t serialized_header[FRAME_HEADER_SIZE];
@@ -130,6 +148,12 @@ static int test_reject_null_header(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing header destination buffer.
+ *
+ * Builds a valid logical header, passes NULL as its serialized output, and
+ * requires serialization to fail.
+ */
 static int test_reject_null_serialized_header(void)
 {
   const frame_header_t header = {
@@ -148,6 +172,12 @@ static int test_reject_null_serialized_header(void)
   return 0;
 }
 
+/**
+ * @brief Checks atomic rejection of an excessive header payload length.
+ *
+ * Sets the length one past MAX_PAYLOAD_SIZE and requires failure while every
+ * serialized-buffer sentinel remains intact.
+ */
 static int test_reject_oversized_payload_length(void)
 {
   const frame_header_t header = {
@@ -187,6 +217,12 @@ static int test_reject_oversized_payload_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks decoding of the wire header's fields.
+ *
+ * Parses a fixed byte sequence and compares the resulting MAC addresses,
+ * payload length and sequence number with their expected values.
+ */
 static int test_parse_frame_header(void)
 {
   const uint8_t serialized_header[FRAME_HEADER_SIZE] = {
@@ -221,6 +257,13 @@ static int test_parse_frame_header(void)
   return 0;
 }
 
+/**
+ * @brief Checks that an invalid parsed header preserves the caller's
+ * structure.
+ *
+ * Encodes an oversized payload length in wire bytes and requires rejection
+ * while comparing the output structure with its saved value.
+ */
 static int test_reject_invalid_parsed_header_atomically(void)
 {
   uint8_t serialized_header[FRAME_HEADER_SIZE] = {UINT8_C(0)};
@@ -246,6 +289,13 @@ static int test_reject_invalid_parsed_header_atomically(void)
   return 0;
 }
 
+/**
+ * @brief Checks scheme-dependent padding and complete-frame sizes.
+ *
+ * Iterates over the supported FCS schemes, checks minimum and maximum
+ * payload sizes, and verifies that an oversized request leaves its output
+ * unchanged.
+ */
 static int test_frame_size_calculations(void)
 {
   static const frame_fcs_scheme_t schemes[] = {
@@ -327,6 +377,12 @@ static int test_frame_size_calculations(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of unsupported schemes and invalid size requests.
+ *
+ * Passes an oversized payload and invalid scheme values to the size helpers
+ * and requires failure with the size output unchanged.
+ */
 static int test_reject_invalid_frame_size_inputs(void)
 {
   size_t output = 123U;
@@ -355,6 +411,12 @@ static int test_reject_invalid_frame_size_inputs(void)
   return 0;
 }
 
+/**
+ * @brief Checks the transmitted FCS representation for every scheme.
+ *
+ * Serializes a fixed payload, compares its FCS bytes with known values, and
+ * checks that CRC-10 is left-aligned with zero low padding bits.
+ */
 static int test_serialize_fcs_wire_formats(void)
 {
   static const frame_fcs_scheme_t schemes[] = {
@@ -423,6 +485,14 @@ static int test_serialize_fcs_wire_formats(void)
   return 0;
 }
 
+/**
+ * @brief Checks successful extraction and corruption rejection for every
+ * FCS.
+ *
+ * Serializes and verifies a fixed frame for each scheme, compares its
+ * extracted payload and sequence byte, then corrupts the payload and
+ * requires rejection.
+ */
 static int test_verify_all_frame_schemes(void)
 {
   static const frame_fcs_scheme_t schemes[] = {
@@ -500,6 +570,12 @@ static int test_verify_all_frame_schemes(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of nonzero padding bits in the CRC-10 field.
+ *
+ * Serializes a valid CRC-10 frame, sets a low padding bit in its two-byte
+ * FCS, and requires verification to fail.
+ */
 static int test_reject_crc10_padding_bits(void)
 {
   const frame_header_t header = {
@@ -546,6 +622,13 @@ static int test_reject_crc10_padding_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks that insufficient output capacity cannot partially serialize
+ * a frame.
+ *
+ * Initializes the destination and output length with sentinels, supplies too
+ * little capacity, and checks that failure preserves both outputs.
+ */
 static int test_reject_small_serialization_buffer_atomically(void)
 {
   const frame_header_t header = {
@@ -582,6 +665,13 @@ static int test_reject_small_serialization_buffer_atomically(void)
   return 0;
 }
 
+/**
+ * @brief Checks that malformed frame lengths leave extraction outputs
+ * intact.
+ *
+ * Passes an invalid serialized length and compares the header, payload, and
+ * payload-length outputs with their initialized sentinels.
+ */
 static int test_reject_invalid_received_length_atomically(void)
 {
   const frame_header_t header = {
@@ -635,6 +725,13 @@ static int test_reject_invalid_received_length_atomically(void)
   return 0;
 }
 
+/**
+ * @brief Checks the public mapping between supported names and scheme
+ * values.
+ *
+ * Parses each of the five supported names and checks that converting the
+ * resulting enum back to text reproduces the original name.
+ */
 static int test_parse_fcs_scheme_names(void)
 {
   static const char *const names[] = {
@@ -663,6 +760,12 @@ static int test_parse_fcs_scheme_names(void)
   return 0;
 }
 
+/**
+ * @brief Checks serialization and verification of a valid empty payload.
+ *
+ * Builds a zero-length frame with NULL payload, verifies its required
+ * padding and FCS, and requires a zero extracted payload length.
+ */
 static int test_zero_length_payload_frame(void)
 {
   const frame_header_t header = {
@@ -705,6 +808,13 @@ static int test_zero_length_payload_frame(void)
   return 0;
 }
 
+/**
+ * @brief Checks that payload padding must be zero even with a matching
+ * checksum.
+ *
+ * Changes a padding byte in a checksum frame, recomputes the checksum over
+ * those bytes, and still requires structural verification to reject it.
+ */
 static int test_reject_nonzero_payload_padding(void)
 {
   const frame_header_t header = {
@@ -766,6 +876,12 @@ static int test_reject_nonzero_payload_padding(void)
   return 0;
 }
 
+/**
+ * @brief Runs this module's tests and reports an overall process status.
+ *
+ * Calls each test helper, accumulates its failure count, and returns zero
+ * only when every check passes.
+ */
 int main(void)
 {
   int failures = 0;

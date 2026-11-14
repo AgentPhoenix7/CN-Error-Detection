@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Checks that rejected random dispatch preserves data and RNG state.
+ *
+ * Exercises null data, zero length, a seed selecting an oversized burst, and
+ * a null RNG, comparing the generator and buffer against saved values.
+ */
 static int test_rejected_dispatch_preserves_state(void)
 {
   uint8_t data[64];
@@ -33,6 +39,13 @@ static int test_rejected_dispatch_preserves_state(void)
   return 0;
 }
 
+/**
+ * @brief Checks random-mode coverage and rejected-dispatch atomicity.
+ *
+ * Runs the rejection checks, applies 1000 seeded random patterns, counts
+ * changed bits to identify each mode, and requires all four mode counts
+ * within the expected coverage range.
+ */
 int main(void)
 {
   if (test_rejected_dispatch_preserves_state() != 0) return 1;

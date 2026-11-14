@@ -30,6 +30,12 @@ const crc_parameters_t crc32_parameters = {
 //   return UINT32_MAX >> (32U - width);
 // }
 
+/**
+ * @brief Builds a mask containing exactly the requested number of CRC bits.
+ *
+ * Checks that the width is 1 through 32 and handles width 32 separately to
+ * avoid shifting by the integer type's full width.
+ */
 static uint32_t crc_width_mask(const uint8_t width)
 {
   assert(width >= 1U);
@@ -42,6 +48,13 @@ static uint32_t crc_width_mask(const uint8_t width)
   return (UINT32_C(1) << width) - UINT32_C(1);
 }
 
+/**
+ * @brief Calculates the configured MSB-first CRC remainder.
+ *
+ * Starts with a zero remainder, shifts in each data bit using the top-bit
+ * feedback, XORs the lower generator polynomial when feedback is set, and
+ * masks to the configured width.
+ */
 uint32_t crc_compute(
   const uint8_t *data,
   const size_t length,
@@ -88,6 +101,12 @@ uint32_t crc_compute(
   return remainder & width_mask;
 }
 
+/**
+ * @brief Checks received data against its transmitted CRC remainder.
+ *
+ * Recomputes the CRC with the same polynomial and compares it with the
+ * received remainder after masking that value to the configured width.
+ */
 bool crc_verify(
   const uint8_t *data,
   const size_t length,

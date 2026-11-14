@@ -3,6 +3,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/**
+ * @brief Checks the MSB-first meaning of bit index zero.
+ *
+ * Flips bit zero of a zero byte and requires the resulting byte to be 0x80.
+ */
 static int test_flip_first_bit(void)
 {
   uint8_t data[] = {UINT8_C(0x00)};
@@ -27,6 +32,12 @@ static int test_flip_first_bit(void)
   return 0;
 }
 
+/**
+ * @brief Checks addressing of the final bit in a multibyte buffer.
+ *
+ * Flips bit 15 of two bytes and requires only the low bit of the second byte
+ * to change.
+ */
 static int test_flip_last_bit(void)
 {
   uint8_t data[] = {
@@ -55,6 +66,12 @@ static int test_flip_last_bit(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a bit immediately beyond the buffer.
+ *
+ * Requests bit eight of a one-byte buffer and requires failure with the
+ * original byte unchanged.
+ */
 static int test_reject_out_of_range_bit(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -78,6 +95,11 @@ static int test_reject_out_of_range_bit(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a null single-bit buffer.
+ *
+ * Calls the single-bit operation with NULL data and requires a false result.
+ */
 static int test_reject_null_data(void)
 {
   if (error_injection_flip_bit(NULL, 0U, 0U)) {
@@ -89,6 +111,12 @@ static int test_reject_null_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks a controlled two-bit pattern spanning two bytes.
+ *
+ * Flips positions one and 14 in zero bytes and compares the result with 0x40
+ * and 0x02.
+ */
 static int test_flip_two_separated_bits(void)
 {
   uint8_t data[] = {
@@ -118,6 +146,12 @@ static int test_flip_two_separated_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a two-bit request cannot name one bit twice.
+ *
+ * Requests the same position twice and requires rejection without modifying
+ * the original byte.
+ */
 static int test_reject_duplicate_bit_indices(void)
 {
   uint8_t data[] = {UINT8_C(0xA5)};
@@ -142,6 +176,12 @@ static int test_reject_duplicate_bit_indices(void)
   return 0;
 }
 
+/**
+ * @brief Checks validation of both indices before either bit is changed.
+ *
+ * Combines a valid position with an out-of-range one and requires failure
+ * with the buffer unchanged.
+ */
 static int test_reject_partially_invalid_two_bit_pattern(void)
 {
   uint8_t data[] = {UINT8_C(0x00)};
@@ -166,6 +206,12 @@ static int test_reject_partially_invalid_two_bit_pattern(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a null two-bit buffer.
+ *
+ * Calls the two-bit operation with NULL data and requires failure before any
+ * mutation.
+ */
 static int test_reject_null_two_bit_data(void)
 {
   if (error_injection_flip_two_bits(NULL, 0U, 0U, 1U)) {
@@ -177,6 +223,12 @@ static int test_reject_null_two_bit_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks an odd controlled pattern with distinct positions.
+ *
+ * Flips bits zero, seven, and 12 in two zero bytes and requires the fixed
+ * 0x81, 0x08 result.
+ */
 static int test_flip_three_separated_bits(void)
 {
   uint8_t data[] = {
@@ -207,6 +259,12 @@ static int test_flip_three_separated_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks that controlled odd-pattern requests reject even counts.
+ *
+ * Supplies two valid indices and requires failure without changing the saved
+ * byte.
+ */
 static int test_reject_even_bit_count(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -232,6 +290,12 @@ static int test_reject_even_bit_count(void)
   return 0;
 }
 
+/**
+ * @brief Checks atomic rejection of an out-of-range odd-pattern index.
+ *
+ * Supplies three indices with the last beyond the buffer and requires all
+ * data to remain unchanged.
+ */
 static int test_reject_invalid_odd_bit_pattern(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -257,6 +321,12 @@ static int test_reject_invalid_odd_bit_pattern(void)
   return 0;
 }
 
+/**
+ * @brief Checks that controlled odd patterns require distinct indices.
+ *
+ * Supplies an odd-length index array containing a duplicate and requires
+ * rejection without any mutation.
+ */
 static int test_reject_duplicate_odd_bit_indices(void)
 {
   uint8_t data[] = {UINT8_C(0xA5)};
@@ -282,6 +352,12 @@ static int test_reject_duplicate_odd_bit_indices(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing odd-pattern index array.
+ *
+ * Passes NULL indices with an otherwise valid buffer and count, then checks
+ * failure and unchanged data.
+ */
 static int test_reject_null_odd_bit_indices(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -306,6 +382,12 @@ static int test_reject_null_odd_bit_indices(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an empty controlled odd pattern.
+ *
+ * Passes zero as the index count and verifies a false result and unchanged
+ * buffer.
+ */
 static int test_reject_zero_odd_bit_count(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -331,6 +413,12 @@ static int test_reject_zero_odd_bit_count(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a null controlled odd-pattern buffer.
+ *
+ * Supplies a valid three-position index array with NULL data and requires
+ * failure.
+ */
 static int test_reject_null_odd_bit_data(void)
 {
   const size_t bit_indices[] = {0U, 1U, 2U};
@@ -349,6 +437,12 @@ static int test_reject_null_odd_bit_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks a burst that crosses from one byte into the next.
+ *
+ * Flips five consecutive bits beginning at bit six and requires the
+ * resulting bytes 0x03 and 0xE0.
+ */
 static int test_flip_burst_across_byte_boundary(void)
 {
   uint8_t data[] = {
@@ -378,6 +472,12 @@ static int test_flip_burst_across_byte_boundary(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a controlled burst must contain at least one bit.
+ *
+ * Requests zero burst length and requires failure with the saved byte
+ * unchanged.
+ */
 static int test_reject_zero_length_burst(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -402,6 +502,12 @@ static int test_reject_zero_length_burst(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a burst starting beyond the buffer.
+ *
+ * Starts at bit eight of one byte and requires failure without modifying
+ * that byte.
+ */
 static int test_reject_out_of_range_burst_start(void)
 {
   uint8_t data[] = {UINT8_C(0xA5)};
@@ -426,6 +532,12 @@ static int test_reject_out_of_range_burst_start(void)
   return 0;
 }
 
+/**
+ * @brief Checks validation of a burst's final endpoint.
+ *
+ * Starts a three-bit burst at bit six of one byte and requires rejection
+ * without partial flips.
+ */
 static int test_reject_overrunning_burst(void)
 {
   uint8_t data[] = {UINT8_C(0xA5)};
@@ -450,6 +562,11 @@ static int test_reject_overrunning_burst(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a null controlled-burst buffer.
+ *
+ * Requests a nonempty burst with NULL data and requires failure.
+ */
 static int test_reject_null_burst_data(void)
 {
   if (error_injection_flip_burst(
@@ -466,6 +583,12 @@ static int test_reject_null_burst_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks overflow-safe calculation of the burst's endpoint.
+ *
+ * Combines a valid start with SIZE_MAX as the burst length and verifies
+ * rejection without changing data.
+ */
 static int test_reject_overflowing_burst_range(void)
 {
   uint8_t data[] = {UINT8_C(0xA5)};
@@ -490,6 +613,12 @@ static int test_reject_overflowing_burst_range(void)
   return 0;
 }
 
+/**
+ * @brief Checks that seeding stores the requested 32-bit state exactly.
+ *
+ * Seeds an initialized generator with 0x12345678 and compares its state
+ * field with that value.
+ */
 static int test_seed_rng_state(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -509,6 +638,11 @@ static int test_seed_rng_state(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing generator during seeding.
+ *
+ * Passes NULL to error_injection_rng_seed and requires failure.
+ */
 static int test_reject_null_rng_state(void)
 {
   if (error_injection_rng_seed(
@@ -523,6 +657,12 @@ static int test_reject_null_rng_state(void)
   return 0;
 }
 
+/**
+ * @brief Checks the deterministic single-bit mutation sequence.
+ *
+ * Seeds the generator with the fixed test seed, flips one random bit, and
+ * compares both the mutated byte and final RNG state with pinned values.
+ */
 static int test_reproduce_random_bit(void)
 {
   uint8_t data[] = {UINT8_C(0x00)};
@@ -555,6 +695,12 @@ static int test_reproduce_random_bit(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of null data in the random single-bit operation.
+ *
+ * Seeds the generator, supplies NULL data, and requires failure without
+ * advancing its state.
+ */
 static int test_reject_null_random_bit_data(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -583,6 +729,13 @@ static int test_reject_null_random_bit_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing RNG in the random single-bit
+ * operation.
+ *
+ * Passes a valid saved buffer with NULL generator state and requires failure
+ * without changing its bytes.
+ */
 static int test_reject_null_random_bit_rng(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -606,6 +759,12 @@ static int test_reject_null_random_bit_rng(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an empty random single-bit buffer.
+ *
+ * Passes zero buffer length with saved data and a seeded generator,
+ * requiring failure with both unchanged.
+ */
 static int test_reject_zero_length_random_bit(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -641,6 +800,13 @@ static int test_reject_zero_length_random_bit(void)
   return 0;
 }
 
+/**
+ * @brief Checks overflow-safe rejection of a random single-bit buffer
+ * length.
+ *
+ * Supplies SIZE_MAX divided by eight plus one as the byte count and checks
+ * that failure preserves both data and RNG state.
+ */
 static int test_reject_overflowing_random_bit_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -677,6 +843,12 @@ static int test_reject_overflowing_random_bit_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks reproducible selection of two nonadjacent bits.
+ *
+ * Applies the seeded two-bit operation and compares its byte result and
+ * final generator state with the stored vector.
+ */
 static int test_reproduce_random_two_bits(void)
 {
   uint8_t data[] = {UINT8_C(0x00)};
@@ -709,6 +881,12 @@ static int test_reproduce_random_two_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of null data in the random two-bit operation.
+ *
+ * Seeds the generator, supplies NULL data, and requires failure without
+ * advancing its state.
+ */
 static int test_reject_null_random_two_bit_data(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -737,6 +915,12 @@ static int test_reject_null_random_two_bit_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing RNG in the random two-bit operation.
+ *
+ * Passes a valid saved buffer with NULL generator state and requires failure
+ * without changing its bytes.
+ */
 static int test_reject_null_random_two_bit_rng(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -760,6 +944,12 @@ static int test_reject_null_random_two_bit_rng(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an empty random two-bit buffer.
+ *
+ * Passes zero buffer length with saved data and a seeded generator,
+ * requiring failure with both unchanged.
+ */
 static int test_reject_zero_length_random_two_bits(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -795,6 +985,12 @@ static int test_reject_zero_length_random_two_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks overflow-safe rejection of a random two-bit buffer length.
+ *
+ * Supplies SIZE_MAX divided by eight plus one as the byte count and checks
+ * that failure preserves both data and RNG state.
+ */
 static int test_reject_overflowing_random_two_bit_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -831,6 +1027,12 @@ static int test_reject_overflowing_random_two_bit_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks reproducible selection of three distinct random positions.
+ *
+ * Applies the seeded odd-bit operation and pins both the changed byte and
+ * the generator state after subset selection.
+ */
 static int test_reproduce_random_odd_bits(void)
 {
   uint8_t data[] = {UINT8_C(0x00)};
@@ -864,6 +1066,12 @@ static int test_reproduce_random_odd_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of null data in the random odd-bit operation.
+ *
+ * Seeds the generator, supplies NULL data, and requires failure without
+ * advancing its state.
+ */
 static int test_reject_null_random_odd_bit_data(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -893,6 +1101,12 @@ static int test_reject_null_random_odd_bit_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing RNG in the random odd-bit operation.
+ *
+ * Passes a valid saved buffer with NULL generator state and requires failure
+ * without changing its bytes.
+ */
 static int test_reject_null_random_odd_bit_rng(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -917,6 +1131,12 @@ static int test_reject_null_random_odd_bit_rng(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an empty random odd-bit buffer.
+ *
+ * Passes zero buffer length with saved data and a seeded generator,
+ * requiring failure with both unchanged.
+ */
 static int test_reject_zero_length_random_odd_bits(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -953,6 +1173,12 @@ static int test_reject_zero_length_random_odd_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks overflow-safe rejection of a random odd-bit buffer length.
+ *
+ * Supplies SIZE_MAX divided by eight plus one as the byte count and checks
+ * that failure preserves both data and RNG state.
+ */
 static int test_reject_overflowing_random_odd_bit_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -990,6 +1216,12 @@ static int test_reject_overflowing_random_odd_bit_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a zero random odd-pattern count.
+ *
+ * Requests no flipped bits from a valid buffer and seeded generator,
+ * requiring failure without changing either.
+ */
 static int test_reject_zero_random_odd_bit_count(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1026,6 +1258,12 @@ static int test_reject_zero_random_odd_bit_count(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an even random odd-pattern count.
+ *
+ * Requests two flipped bits through the odd-pattern interface and requires
+ * failure with bytes and RNG state intact.
+ */
 static int test_reject_even_random_odd_bit_count(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1062,6 +1300,12 @@ static int test_reject_even_random_odd_bit_count(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a random subset cannot exceed the buffer's bit count.
+ *
+ * Requests nine distinct bits from a one-byte buffer and requires rejection
+ * before any data or RNG change.
+ */
 static int test_reject_excessive_random_odd_bit_count(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1098,6 +1342,13 @@ static int test_reject_excessive_random_odd_bit_count(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an unrepresentable random index-array request.
+ *
+ * Supplies a very large byte length and an odd count above the index-array
+ * size limit, then checks failure with bytes and RNG state unchanged.
+ * Length validation may reject the request before the allocation guard.
+ */
 static int test_reject_overflowing_random_odd_bit_allocation(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1137,6 +1388,13 @@ static int test_reject_overflowing_random_odd_bit_allocation(void)
   return 0;
 }
 
+/**
+ * @brief Checks Floyd sampling when a candidate repeats a selected position.
+ *
+ * Requests 13 distinct bits from 24 using a fixed seed and compares all
+ * three mutated bytes and the final RNG state with the collision-handling
+ * vector.
+ */
 static int test_reselect_duplicate_random_odd_bits(void)
 {
   uint8_t data[] = {
@@ -1176,6 +1434,12 @@ static int test_reselect_duplicate_random_odd_bits(void)
   return 0;
 }
 
+/**
+ * @brief Checks reproducible placement of a contiguous random burst.
+ *
+ * Applies a seeded seven-bit burst to two zero bytes and checks the expected
+ * mask and generator state.
+ */
 static int test_reproduce_random_burst(void)
 {
   uint8_t data[] = {
@@ -1213,6 +1477,12 @@ static int test_reproduce_random_burst(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of null data in the random burst operation.
+ *
+ * Seeds the generator, supplies NULL data, and requires failure without
+ * advancing its state.
+ */
 static int test_reject_null_random_burst_data(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -1242,6 +1512,12 @@ static int test_reject_null_random_burst_data(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of a missing RNG in the random burst operation.
+ *
+ * Passes a valid saved buffer with NULL generator state and requires failure
+ * without changing its bytes.
+ */
 static int test_reject_null_random_burst_rng(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1266,6 +1542,12 @@ static int test_reject_null_random_burst_rng(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of an empty random burst buffer.
+ *
+ * Passes zero buffer length with saved data and a seeded generator,
+ * requiring failure with both unchanged.
+ */
 static int test_reject_zero_length_random_burst(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1302,6 +1584,12 @@ static int test_reject_zero_length_random_burst(void)
   return 0;
 }
 
+/**
+ * @brief Checks overflow-safe rejection of a random burst buffer length.
+ *
+ * Supplies SIZE_MAX divided by eight plus one as the byte count and checks
+ * that failure preserves both data and RNG state.
+ */
 static int test_reject_overflowing_random_burst_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1339,6 +1627,12 @@ static int test_reject_overflowing_random_burst_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a random burst must have positive length.
+ *
+ * Requests a zero-bit burst in a valid buffer and requires failure without
+ * changing data or the seeded generator.
+ */
 static int test_reject_zero_random_burst_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1375,6 +1669,12 @@ static int test_reject_zero_random_burst_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a random burst must fit entirely within its buffer.
+ *
+ * Requests nine consecutive bits in one byte and verifies rejection with
+ * bytes and RNG state unchanged.
+ */
 static int test_reject_excessive_random_burst_length(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1411,6 +1711,12 @@ static int test_reject_excessive_random_burst_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks the single available start of a buffer-sized random burst.
+ *
+ * Requests all eight bits of one byte, requires its bitwise complement, and
+ * checks that the RNG still advanced by the expected draw.
+ */
 static int test_flip_full_length_random_burst(void)
 {
   uint8_t data[] = {UINT8_C(0x5A)};
@@ -1444,6 +1750,12 @@ static int test_flip_full_length_random_burst(void)
   return 0;
 }
 
+/**
+ * @brief Checks the seeded frame-selection decision sequence.
+ *
+ * Compares twelve denominator-two decisions with a fixed boolean array and
+ * verifies the final generator state.
+ */
 static int test_reproduce_random_frame_selection(void)
 {
   static const bool expected[] = {
@@ -1479,6 +1791,12 @@ static int test_reproduce_random_frame_selection(void)
   return 0;
 }
 
+/**
+ * @brief Checks denominator-one selection without consuming randomness.
+ *
+ * Seeds the generator, requests selection with denominator one, and requires
+ * true selection with the original state intact.
+ */
 static int test_select_every_frame_without_advancing_rng(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -1499,6 +1817,12 @@ static int test_select_every_frame_without_advancing_rng(void)
   return 0;
 }
 
+/**
+ * @brief Checks atomic rejection of invalid frame-selection arguments.
+ *
+ * Passes denominator zero and null pointers, requiring failure while the
+ * selection output and generator state retain their saved values.
+ */
 static int test_reject_invalid_frame_selection(void)
 {
   error_injection_rng_t rng = {UINT32_C(0)};
@@ -1527,6 +1851,13 @@ static int test_reject_invalid_frame_selection(void)
   return 0;
 }
 
+/**
+ * @brief Checks that random two-bit choices cover parity and checksum
+ * weights.
+ *
+ * Samples 10000 frame-sized buffers, locates exactly two nonadjacent changed
+ * bits, and checks frequencies for matching parity and modulo-16 positions.
+ */
 static int test_two_bit_sampling_covers_checksum_weights(void)
 {
   error_injection_rng_t rng = {UINT32_C(0x12345678)};
@@ -1555,6 +1886,14 @@ static int test_two_bit_sampling_covers_checksum_weights(void)
   return 0;
 }
 
+/**
+ * @brief Checks bounded mapping retries, maximum bounds, and invalid-input
+ * atomicity.
+ *
+ * Pins a seed needing rejected products, verifies its accepted value and
+ * final state, and exercises null/zero/oversized arguments plus the 2^32
+ * bound where representable.
+ */
 static int test_bounded_rng_rejection_and_atomicity(void)
 {
   error_injection_rng_t rng = {UINT32_C(0x12345678)};
@@ -1580,6 +1919,12 @@ static int test_bounded_rng_rejection_and_atomicity(void)
   return 0;
 }
 
+/**
+ * @brief Checks rejection of buffers beyond the RNG's 2^32-bit range.
+ *
+ * On wide size_t platforms, calls every random mutation with a length just
+ * over that limit and checks failure with unchanged bytes and RNG state.
+ */
 static int test_reject_rng_unaddressable_buffers(void)
 {
 #if SIZE_MAX > UINT32_MAX
@@ -1596,6 +1941,12 @@ static int test_reject_rng_unaddressable_buffers(void)
   return 0;
 }
 
+/**
+ * @brief Runs this module's tests and reports an overall process status.
+ *
+ * Calls each test helper, accumulates its failure count, and returns zero
+ * only when every check passes.
+ */
 int main(void)
 {
   int failures = 0;

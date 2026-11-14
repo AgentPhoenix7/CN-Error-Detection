@@ -1,5 +1,11 @@
 #include "checksum.h"
 
+/**
+ * @brief Computes the 16-bit one's-complement checksum of a byte buffer.
+ *
+ * Adds big-endian 16-bit words with end-around carry, treats a final odd
+ * byte as a word's high byte, then complements the folded sum.
+ */
 uint16_t checksum16_compute(const uint8_t *data, const size_t length)
 {
   uint32_t sum = 0U;
@@ -24,6 +30,12 @@ uint16_t checksum16_compute(const uint8_t *data, const size_t length)
   return (uint16_t)~sum;
 }
 
+/**
+ * @brief Checks whether received data matches its transmitted checksum.
+ *
+ * Recovers the folded data sum from checksum16_compute(), adds the received
+ * checksum with end-around carry, and requires an all-ones result.
+ */
 bool checksum16_verify(
   const uint8_t *data,
   const size_t length,

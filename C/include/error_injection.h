@@ -21,6 +21,9 @@ typedef struct error_injection_rng_t
 /**
  * @brief Initializes reproducible pseudo-random generator state.
  *
+ * Rejects a null state pointer and otherwise copies the supplied seed
+ * directly into its 32-bit state field.
+ *
  * @param[out] rng State object to initialize.
  * @param[in] seed Starting value for the reproducible sequence.
  * @return `true` when the state was initialized; `false` when `rng` is `NULL`.
@@ -36,6 +39,10 @@ bool error_injection_rng_seed(
  * `bound` must fit size_t and be in [1, 2^32]. Consumes one or more LCG
  * values, avoiding its weak low bits and modulo bias. Invalid inputs leave
  * the RNG and output unchanged. A bound of one still consumes one value.
+ *
+ * Validates a bound in [1, 2^32], multiplies each 32-bit generator value by
+ * it, rejects incomplete low-product buckets, and returns the product's high
+ * 32 bits.
  *
  * @param[in,out] rng Initialized generator state.
  * @param[in] bound Exclusive upper bound.
@@ -55,6 +62,10 @@ bool error_injection_rng_bounded(
  * Other valid denominators advance the generator exactly once. Invalid input
  * leaves both the generator and output unchanged.
  *
+ * Selects every frame without a draw for denominator one; otherwise advances
+ * the generator once and selects bucket zero of a multiply-high scaled
+ * denominator range.
+ *
  * @param[in,out] rng Initialized pseudo-random generator state.
  * @param[in] denominator Positive inverse selection probability.
  * @param[out] selected Whether the current frame was selected.
@@ -72,6 +83,9 @@ bool error_injection_select_frame(
  * Uses and advances the supplied generator state. No data or generator state
  * is modified when the input is invalid.
  * Random mutation buffers are limited to 2^32 bits and must also fit size_t.
+ *
+ * Validates the buffer and RNG, samples a bounded MSB-first bit index, and
+ * delegates the mutation to error_injection_flip_bit().
  *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
@@ -91,6 +105,9 @@ bool error_injection_flip_random_bit(
  * advances the supplied generator state. No data or generator state is
  * modified when the input is invalid.
  *
+ * Draws two bounded positions until their absolute difference exceeds one,
+ * then delegates both validated flips to error_injection_flip_two_bits().
+ *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
  * @param[in,out] rng Initialized pseudo-random generator state.
@@ -108,6 +125,10 @@ bool error_injection_flip_random_two_bits(
  * `bit_count` must be positive, odd, and no greater than the number of bits in
  * `data`. Uses and advances the supplied generator state. No data or generator
  * state is modified when the input is invalid.
+ *
+ * Checks counts and allocation size, builds a distinct subset with Floyd
+ * sampling and collision substitution, applies the controlled odd-bit
+ * operation, and frees the temporary indices.
  *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
@@ -129,6 +150,9 @@ bool error_injection_flip_random_odd_bits(
  * `data`. Selects one valid start position and advances the supplied generator
  * state. No data or generator state is modified when the input is invalid.
  *
+ * Validates the requested length, samples among starts where the entire
+ * burst fits, and delegates the mutation to error_injection_flip_burst().
+ *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
  * @param[in] burst_length Positive number of consecutive bits to flip.
@@ -147,6 +171,10 @@ bool error_injection_flip_random_burst(
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
  *
+ * Checks the byte index without multiplying the buffer length, derives the
+ * byte offset and shifted 0x80 mask, and XORs that mask into the selected
+ * byte.
+ *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
  * @param[in] bit_index Zero-based bit position to flip.
@@ -164,6 +192,9 @@ bool error_injection_flip_bit(
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
  * No data is modified when either index is invalid or the indices match.
+ *
+ * Validates both indices and their distinctness before invoking the single-
+ * bit primitive for each position.
  *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
@@ -184,6 +215,9 @@ bool error_injection_flip_two_bits(
  * All indices are validated before any data is modified. Bit index zero
  * identifies the most-significant bit of `data[0]`.
  *
+ * Checks the count, bounds, and duplicate indices in a validation pass, then
+ * flips all positions in a separate mutation pass.
+ *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.
  * @param[in] bit_indices Array of zero-based bit positions.
@@ -202,6 +236,9 @@ bool error_injection_flip_odd_bits(
  *
  * Bit index zero identifies the most-significant bit of `data[0]`.
  * The complete range is validated before any data is modified.
+ *
+ * Checks nonzero length, addition overflow, and both endpoints before
+ * visiting each position with the single-bit primitive.
  *
  * @param[in,out] data Bytes to modify.
  * @param[in] length Number of bytes in `data`.

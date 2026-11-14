@@ -53,6 +53,9 @@ SCHEMES = ("checksum", "crc8", "crc10", "crc16", "crc32")
 PATTERNS = ("none", "single", "two", "odd", "burst")
 
 
+# Builds a synthetic valid CSV row for validator tests. Derives clean,
+# injected, accepted and missed counts from the chosen pattern and rejection
+# count, then fills stable metadata and consistent process metrics.
 def experiment_row(
     scheme: str,
     pattern: str,
@@ -109,23 +112,34 @@ def experiment_row(
 
 
 class ExperimentResultsTest(unittest.TestCase):
+    # Creates an isolated results path for each validation test. Allocates a
+    # temporary directory, registers its cleanup, and stores a CSV filename
+    # inside it.
     def setUp(self) -> None:
         self.temporary_directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary_directory.cleanup)
         self.csv_path = Path(self.temporary_directory.name) / "results.csv"
 
+    # Writes synthetic rows with the production CSV column order. Opens the
+    # test file with CSV-safe newline handling, writes the fixed header, and
+    # serializes the supplied row dictionaries.
     def write_rows(self, rows: list[dict[str, str]]) -> None:
         with self.csv_path.open("w", newline="", encoding="utf-8") as output:
             writer = csv.DictWriter(output, fieldnames=CSV_FIELDS)
             writer.writeheader()
             writer.writerows(rows)
 
+    # Checks rejection of a CSV with missing columns. Writes only scheme and
+    # error-pattern columns and requires load_rows() to raise a schema error.
     def test_rejects_incompatible_schema(self) -> None:
         self.csv_path.write_text("scheme,error_pattern\nchecksum,none\n", encoding="utf-8")
 
         with self.assertRaisesRegex(ValueError, "schema"):
             load_rows(self.csv_path)
 
+    # Checks rejection of duplicate experiment identities. Writes two copies of
+    # the same row and requires the loader to reject the repeated
+    # scheme/pattern/repeat key.
     def test_rejects_duplicate_experiment_grain(self) -> None:
         row = experiment_row("checksum", "single")
         self.write_rows([row, row.copy()])
@@ -133,6 +147,9 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             load_rows(self.csv_path)
 
+    # Checks enforcement of receiver frame accounting. Changes a valid row's
+    # accepted count so it no longer reconciles with received frames and
+    # requires a validation error.
     def test_rejects_broken_frame_invariant(self) -> None:
         row = experiment_row("checksum", "single")
         row["frames_accepted"] = "9"
@@ -141,6 +158,9 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             load_rows(self.csv_path)
 
+    # Checks that a stored detection rate must match its counts. Creates nine
+    # detections out of ten trials, overwrites the rate with one, and requires
+    # a detection-rate error.
     def test_rejects_incorrect_stored_rate(self) -> None:
         row = experiment_row("checksum", "single", rejected=9)
         row["detection_rate"] = "1.000000000"
@@ -149,6 +169,8 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "detection_rate"):
             load_rows(self.csv_path)
 
+    # Checks rejection of NaN process measurements. Replaces a valid elapsed-
+    # time field with nan and requires the non-finite-number validation error.
     def test_rejects_nonfinite_metric(self) -> None:
         row = experiment_row("checksum", "single")
         row["sender_elapsed_seconds"] = "nan"
@@ -157,6 +179,10 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non-finite"):
             load_rows(self.csv_path)
 
+    # Checks full campaign aggregation and exact comparison cases. Builds all
+    # 25 groups with controlled misses, validates them, and compares the
+    # required-case dictionaries and checksum burst miss rate with expected
+    # values.
     def test_validates_complete_campaign_and_required_cases(self) -> None:
         rows = []
         for scheme in SCHEMES:
@@ -217,6 +243,9 @@ class ExperimentResultsTest(unittest.TestCase):
         self.assertEqual(checksum_burst["undetected_frames"], 2)
         self.assertAlmostEqual(float(checksum_burst["undetected_rate"]), 0.2)
 
+    # Checks that aggregate counts yield honest overlap bounds. Makes checksum
+    # miss two trials and CRC-10 miss one in the paired two-bit group, then
+    # requires the checksum-only interval zero through one.
     def test_required_comparisons_bound_unknown_intersections(self) -> None:
         rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
         rows = [
@@ -231,6 +260,9 @@ class ExperimentResultsTest(unittest.TestCase):
         self.assertEqual(comparison["case_count_min"], 0)
         self.assertEqual(comparison["case_count_max"], 1)
 
+    # Checks that comparison groups must represent paired trials. Changes only
+    # the CRC-10 two-bit seed in an otherwise complete campaign and requires an
+    # unpaired-trials error.
     def test_required_comparisons_reject_unpaired_seeds(self) -> None:
         rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
         next(row for row in rows if row["scheme"] == "crc10" and row["error_pattern"] == "two")["seed"] = "0x12345679"
@@ -238,6 +270,9 @@ class ExperimentResultsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unpaired"):
             required_comparisons(load_summaries(self.csv_path))
 
+    # Checks stable input metadata across repeats of one group. Changes the
+    # second repeat's input path, byte count, or error denominator in turn and
+    # requires a field-specific inconsistency error.
     def test_rejects_metadata_changes_within_group(self) -> None:
         for field, value in (("input_file", "other.bin"), ("input_bytes", "101"), ("error_interval", "3")):
             with self.subTest(field=field):
@@ -248,6 +283,9 @@ class ExperimentResultsTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "inconsistent.*" + field):
                     load_summaries(self.csv_path)
 
+    # Checks that campaign error groups use the same input corpus. Changes one
+    # CRC-8 single-bit group's input path and requires complete-campaign
+    # validation to reject the mixed corpora.
     def test_rejects_different_corpora_in_complete_campaign(self) -> None:
         rows = [experiment_row(scheme, pattern) for scheme in SCHEMES for pattern in PATTERNS]
         next(row for row in rows if row["scheme"] == "crc8" and row["error_pattern"] == "single")["input_file"] = "different.bin"

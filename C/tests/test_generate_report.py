@@ -26,10 +26,15 @@ SCHEMES = ("checksum", "crc8", "crc10", "crc16", "crc32")
 PATTERNS = ("none", "single", "two", "odd", "burst")
 
 
+# Builds a minimal valid template for report tests. Joins every required
+# placeholder beneath a Markdown heading with fixed blank-line spacing.
 def report_template() -> str:
     return "# Generated report\n\n" + "\n\n".join(TOKENS) + "\n"
 
 
+# Builds synthetic summaries for every scheme and pattern. Assigns stable
+# control metrics and paired injected trials, introducing specific checksum-
+# burst and CRC-10 two-bit misses to test report calculations.
 def campaign_summaries() -> list[dict[str, str | float | int]]:
     summaries = []
     for scheme in SCHEMES:
@@ -96,6 +101,9 @@ def campaign_summaries() -> list[dict[str, str | float | int]]:
 
 
 class GenerateReportTest(unittest.TestCase):
+    # Checks repeatable rendering and the reported aggregate values. Renders
+    # the same inputs twice and checks equality, provenance, expected table
+    # cells and miss prose, plus removal of all template markers.
     def test_renders_complete_deterministic_report(self) -> None:
         summaries = campaign_summaries()
 
@@ -112,12 +120,18 @@ class GenerateReportTest(unittest.TestCase):
         self.assertIn("CRC-10 two-bit: 1 of 10", first)
         self.assertNotIn("{{", first)
 
+    # Checks that the template must contain every required section token.
+    # Removes the resource-table placeholder and requires rendering to raise an
+    # error naming that missing token.
     def test_rejects_missing_placeholder(self) -> None:
         template = report_template().replace("{{RESOURCE_TABLE}}\n\n", "")
 
         with self.assertRaisesRegex(ValueError, "RESOURCE_TABLE"):
             render_report(template, campaign_summaries(), "results/test.csv")
 
+    # Checks that each report placeholder occurs exactly once. Adds a second
+    # timing-table token to a valid template and requires rendering to reject
+    # it.
     def test_rejects_duplicate_placeholder(self) -> None:
         template = report_template() + "{{TIMING_TABLE}}\n"
 

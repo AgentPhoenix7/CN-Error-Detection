@@ -24,6 +24,12 @@ typedef struct receiver_metrics_t
   long max_rss_kb;
 } receiver_metrics_t;
 
+/**
+ * @brief Prints the receiver's supported command-line arguments.
+ *
+ * Writes the executable name, output path syntax, optional port, and
+ * supported FCS scheme names to standard error.
+ */
 static void receiver_print_usage(const char *program)
 {
   fprintf(
@@ -34,6 +40,12 @@ static void receiver_print_usage(const char *program)
   );
 }
 
+/**
+ * @brief Parses a nonzero decimal listening port safely.
+ *
+ * Uses strtoul in base ten and checks errno, trailing text and uint16_t
+ * limits before assigning the validated value.
+ */
 static bool receiver_parse_port(const char *text, uint16_t *port)
 {
   char *end;
@@ -59,6 +71,12 @@ static bool receiver_parse_port(const char *text, uint16_t *port)
   return true;
 }
 
+/**
+ * @brief Converts the difference between monotonic timestamps to seconds.
+ *
+ * Subtracts their seconds fields and scales the nanosecond difference by one
+ * billion before adding it.
+ */
 static double receiver_timespec_difference(
   const struct timespec *start,
   const struct timespec *end
@@ -69,6 +87,12 @@ static double receiver_timespec_difference(
     (double)(end->tv_nsec - start->tv_nsec) / 1000000000.0;
 }
 
+/**
+ * @brief Converts a resource-usage timestamp difference to CPU seconds.
+ *
+ * Subtracts seconds fields and adds the microsecond difference divided by
+ * one million.
+ */
 static double receiver_timeval_difference(
   const struct timeval *start,
   const struct timeval *end
@@ -79,6 +103,14 @@ static double receiver_timeval_difference(
     (double)(end->tv_usec - start->tv_usec) / 1000000.0;
 }
 
+/**
+ * @brief Receives protected frames and writes accepted unpadded payloads.
+ *
+ * Parses the CLI, opens a listener, accepts one client, reads exact length-
+ * prefixed records until the end marker, validates each frame and FCS,
+ * counts outcomes, then reports metrics and closes resources; no sequence-
+ * continuity policy is applied.
+ */
 int main(int argc, char *argv[])
 {
   uint16_t port = DEFAULT_SERVER_PORT;

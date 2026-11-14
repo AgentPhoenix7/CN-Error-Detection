@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/**
+ * @brief Checks checksum addition for an even-length buffer.
+ *
+ * Computes the checksum of the fixed eight-byte vector and compares it with
+ * the known value 0x220D.
+ */
 static int test_even_length(void)
 {
   const uint8_t data[] = {
@@ -29,6 +35,12 @@ static int test_even_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks zero-extension of the last odd payload byte.
+ *
+ * Computes the checksum of 12 34 56 and requires 0x97CB, which treats 56 as
+ * the high byte of the final word.
+ */
 static int test_odd_length(void)
 {
   const uint8_t data[] = {0x12, 0x34, 0x56};
@@ -51,6 +63,12 @@ static int test_odd_length(void)
   return 0;
 }
 
+/**
+ * @brief Checks the checksum of an empty buffer.
+ *
+ * Calls checksum16_compute with NULL and zero length and requires the
+ * one's-complement empty sum, UINT16_MAX.
+ */
 static int test_empty_input(void)
 {
   const uint16_t expected = UINT16_MAX;
@@ -72,6 +90,12 @@ static int test_empty_input(void)
   return 0;
 }
 
+/**
+ * @brief Checks that a correct received checksum is accepted.
+ *
+ * Verifies the fixed eight-byte vector against its known 0x220D checksum and
+ * requires success.
+ */
 static int test_valid_verification(void)
 {
   const uint8_t data[] = {
@@ -93,6 +117,12 @@ static int test_valid_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks detection of a data-bit error.
+ *
+ * Flips one bit of the fixed data vector while retaining its original
+ * checksum and requires verification to fail.
+ */
 static int test_corrupted_data_verification(void)
 {
   uint8_t data[] = {
@@ -116,6 +146,12 @@ static int test_corrupted_data_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks detection of a transmitted checksum-bit error.
+ *
+ * Keeps the data intact, toggles one bit of the known checksum, and requires
+ * verification to fail.
+ */
 static int test_corrupted_checksum_verification(void)
 {
   const uint8_t data[] = {
@@ -139,6 +175,12 @@ static int test_corrupted_checksum_verification(void)
   return 0;
 }
 
+/**
+ * @brief Checks verification of the valid empty codeword.
+ *
+ * Verifies NULL data with zero length and UINT16_MAX as the received
+ * checksum and requires success.
+ */
 static int test_empty_verification(void)
 {
   if (!checksum16_verify(NULL, 0U, UINT16_MAX)) {
@@ -150,6 +192,12 @@ static int test_empty_verification(void)
   return 0;
 }
 
+/**
+ * @brief Runs this module's tests and reports an overall process status.
+ *
+ * Calls each test helper, accumulates its failure count, and returns zero
+ * only when every check passes.
+ */
 int main(void)
 {
   int failures = 0;

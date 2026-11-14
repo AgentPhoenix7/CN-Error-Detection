@@ -70,6 +70,9 @@ FLOAT_FIELDS = (
 )
 
 
+# Parses a nonnegative integer from one CSV field. Converts the named string
+# with int(), rejects missing, malformed or negative values, and includes the
+# row number in errors.
 def _integer(row: dict[str, str], name: str, line_number: int) -> int:
     try:
         value = int(row[name])
@@ -82,6 +85,9 @@ def _integer(row: dict[str, str], name: str, line_number: int) -> int:
     return value
 
 
+# Parses a finite nonnegative measurement from one CSV field. Converts the
+# named value to float and rejects malformed, infinite, NaN, or negative values
+# with a row-specific error.
 def _floating(row: dict[str, str], name: str, line_number: int) -> float:
     try:
         value = float(row[name])
@@ -97,6 +103,9 @@ def _floating(row: dict[str, str], name: str, line_number: int) -> float:
     return value
 
 
+# Checks the schema values and accounting rules for one experiment. Validates
+# names and numeric ranges, recomputes frame totals, rates and CPU sums, and
+# enforces lossless no-error control counts.
 def _validate_row(row: dict[str, str], line_number: int) -> None:
     if row["scheme"] not in SCHEMES:
         raise ValueError(f"line {line_number}: invalid scheme")
@@ -173,6 +182,9 @@ def _validate_row(row: dict[str, str], line_number: int) -> None:
         raise ValueError(f"line {line_number}: invalid error_interval")
 
 
+# Loads a nonempty experiment CSV with valid rows and unique identities.
+# Requires the exact header, validates each row, and rejects repeated
+# scheme/pattern/repeat keys before returning the row dictionaries.
 def load_rows(path: Path) -> list[dict[str, str]]:
     """Load rows after validating schema, values, invariants, and grain."""
     rows: list[dict[str, str]] = []
@@ -202,6 +214,9 @@ def load_rows(path: Path) -> list[dict[str, str]]:
     return rows
 
 
+# Aggregates repeat measurements by scheme and error pattern. Requires stable
+# input metadata, pools frame counts to derive rates, averages timing/resource
+# values, computes timing deviation, and stores sorted pairing signatures.
 def summarize_rows(rows: list[dict[str, str]]) -> list[dict[str, str | float | int]]:
     """Pool frame outcomes and average process metrics by scheme and pattern."""
     grouped: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
@@ -274,11 +289,15 @@ def summarize_rows(rows: list[dict[str, str]]) -> list[dict[str, str | float | i
     return summaries
 
 
+# Loads a CSV and produces its per-group aggregates. Passes the file through
+# load_rows() and then summarize_rows() so validation precedes aggregation.
 def load_summaries(path: Path) -> list[dict[str, str | float | int]]:
     """Load and summarize one validated experiment CSV."""
     return summarize_rows(load_rows(path))
 
 
+# Finds the summary for a particular scheme and pattern. Returns the first
+# dictionary matching both fields or None if that group is absent.
 def summary_for(
     summaries: list[dict[str, str | float | int]],
     scheme: str,
@@ -295,6 +314,9 @@ def summary_for(
     )
 
 
+# Checks that summaries form a comparable full campaign. Requires every
+# scheme/pattern group, consistent repeats, intervals and input metadata within
+# error/control cohorts, and nonzero injected trials for error groups.
 def validate_complete_campaign(
     summaries: list[dict[str, str | float | int]],
 ) -> None:
@@ -342,6 +364,10 @@ def validate_complete_campaign(
         raise ValueError("inconsistent control input files")
 
 
+# Bounds the three assignment-required checksum-versus-CRC outcomes. Checks
+# paired trial signatures and counts, then derives minimum and maximum
+# intersections from the two schemes' aggregate detected counts without
+# inventing per-frame matches.
 def required_comparisons(
     summaries: list[dict[str, str | float | int]],
 ) -> list[dict[str, str | int]]:
