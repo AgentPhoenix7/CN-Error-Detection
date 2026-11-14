@@ -51,14 +51,13 @@ static void receiver_print_usage(const char *program)
 static bool receiver_parse_port(const char *text, uint16_t *port)
 {
   char *end;
-  unsigned long value;
 
   if (text == NULL || port == NULL || text[0] == '\0') {
     return false;
   }
 
   errno = 0;
-  value = strtoul(text, &end, 10);
+  const unsigned long value = strtoul(text, &end, 10);
 
   if (
     errno != 0 ||
