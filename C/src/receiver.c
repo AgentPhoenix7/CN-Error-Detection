@@ -14,6 +14,15 @@
 #include <time.h>
 #include <unistd.h>
 
+/**
+ * @brief Structure to hold receiver metrics.
+ * 
+ * This structure is used to track various metrics related to the receiver's
+ * operation, including the number of frames received, accepted, and rejected,
+ * as well as the total number of payload bytes written. It also includes timing
+ * information for elapsed time, user CPU time, system CPU time, and the maximum
+ * resident set size (RSS) in kilobytes.
+ */
 typedef struct receiver_metrics_t
 {
   size_t frames_received;
@@ -56,7 +65,9 @@ static bool receiver_parse_port(const char *text, uint16_t *port)
     return false;
   }
 
+  // Reset errno before calling strtoul to detect errors.
   errno = 0;
+  // Convert the string to an unsigned long integer in base 10.
   const unsigned long value = strtoul(text, &end, 10);
 
   if (
@@ -68,6 +79,7 @@ static bool receiver_parse_port(const char *text, uint16_t *port)
     return false;
   }
 
+  // Assign the validated value to the port variable.
   *port = (uint16_t)value;
   return true;
 }
@@ -83,6 +95,8 @@ static double receiver_timespec_difference(
   const struct timespec *end
 )
 {
+  // Calculate the difference in seconds and nanoseconds, converting nanoseconds
+  // to seconds.
   return
     (double)(end->tv_sec - start->tv_sec) +
     (double)(end->tv_nsec - start->tv_nsec) / 1000000000.0;
@@ -99,6 +113,8 @@ static double receiver_timeval_difference(
   const struct timeval *end
 )
 {
+  // Calculate the difference in seconds and microseconds, converting microseconds
+  // to seconds.
   return
     (double)(end->tv_sec - start->tv_sec) +
     (double)(end->tv_usec - start->tv_usec) / 1000000.0;
@@ -114,6 +130,8 @@ static double receiver_timeval_difference(
  */
 int main(int argc, char *argv[])
 {
+  // Define default values for the port and other parameters. These can be
+  // overridden by command-line arguments.
   uint16_t port = DEFAULT_SERVER_PORT;
   frame_fcs_scheme_t scheme;
   uint8_t length_prefix[2];
@@ -133,11 +151,15 @@ int main(int argc, char *argv[])
   FILE *output = NULL;
   int status = EXIT_FAILURE;
 
+  // Check the number of command-line arguments. The program expects between 3
+  // and 4 arguments.
   if (argc < 3 || argc > 4) {
     receiver_print_usage(argv[0]);
     return EXIT_FAILURE;
   }
 
+  // Parse the FCS scheme and optional port from the command-line arguments. If
+  // parsing fails, print the usage information and exit with a failure status.
   if (
     !frame_fcs_scheme_parse(argv[2], &scheme) ||
     (argc >= 4 && !receiver_parse_port(argv[3], &port))
@@ -146,6 +168,9 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  // Open the output file specified by the first command-line argument in binary
+  // write mode. If the file cannot be opened, print an error message and exit with
+  // a failure status.
   output = fopen(argv[1], "wb");
 
   if (output == NULL) {
@@ -153,6 +178,8 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
+  // Create a listening socket on the specified port with a backlog of 1. If the
+  // socket cannot be created, print an error message and exit with a failure status.
   listener = socket_utils_listen(port, 1);
 
   if (listener < 0) {
@@ -169,6 +196,7 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
+  // Record the start time and resource usage.
   if (
     clock_gettime(CLOCK_MONOTONIC, &start_time) != 0 ||
     getrusage(RUSAGE_SELF, &start_usage) != 0
@@ -177,6 +205,9 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
+  // Enter a loop to receive frames from the client. The loop continues until an end
+  // marker (zero-length frame) is received. Each frame is validated, and accepted frames
+  // are written to the output file. Metrics are updated accordingly.
   for (
     ;
     ;
@@ -238,6 +269,8 @@ int main(int argc, char *argv[])
     }
   }
 
+  // Record the end time and resource usage, and retrieve the peak RSS. If any of these
+  // operations fail, print an error message and exit with a failure status.
   if (
     clock_gettime(CLOCK_MONOTONIC, &end_time) != 0 ||
     getrusage(RUSAGE_SELF, &end_usage) != 0 ||
@@ -247,6 +280,8 @@ int main(int argc, char *argv[])
     goto cleanup;
   }
 
+  // Calculate the elapsed time, user CPU time, and system CPU time based on the recorded
+  // start and end times and resource usage.
   metrics.elapsed_seconds = receiver_timespec_difference(
     &start_time,
     &end_time
@@ -282,6 +317,7 @@ int main(int argc, char *argv[])
   );
   status = EXIT_SUCCESS;
 
+// Clean up resources and exit.
 cleanup:
   if (client >= 0) {
     (void)close(client);
