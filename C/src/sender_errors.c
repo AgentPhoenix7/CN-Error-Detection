@@ -25,11 +25,19 @@ bool sender_errors_apply(
   error_injection_rng_t pending_rng = *rng;
   bool applied;
 
+  // Handle the random pattern by choosing one of the other patterns at random.
   if (pattern == SENDER_ERROR_PATTERN_RANDOM) {
     size_t choice;
+    // The random pattern is defined to choose one of the other four patterns
+    // with equal probability. This is done by drawing a bounded random number
+    // in [0, 4) and adding it to the enum value of SENDER_ERROR_PATTERN_SINGLE.
+    // The resulting value will be one of the four patterns.
     if (!error_injection_rng_bounded(&pending_rng, 4U, &choice)) {
       return false;
     }
+    // The choice is guaranteed to be in [0, 4), so adding it to
+    // SENDER_ERROR_PATTERN_SINGLE will yield a valid pattern in the range
+    // [SENDER_ERROR_PATTERN_SINGLE, SENDER_ERROR_PATTERN_BURST].
     pattern = (sender_error_pattern_t)(
       SENDER_ERROR_PATTERN_SINGLE + choice
     );
