@@ -17,13 +17,11 @@
  * or truncated result before address resolution uses it.
  */
 static bool socket_utils_format_port(
-  uint16_t port,
+  const uint16_t port,
   char output[6]
 )
 {
-  int written;
-
-  written = snprintf(output, 6U, "%u", (unsigned int)port);
+  const int written = snprintf(output, 6U, "%u", (unsigned int)port);
   return written > 0 && written < 6;
 }
 
@@ -34,14 +32,12 @@ static bool socket_utils_format_port(
  * each, closes failed descriptors, frees the address list, and returns the
  * successful descriptor or -1.
  */
-int socket_utils_connect(const char *host, uint16_t port)
+int socket_utils_connect(const char *host, const uint16_t port)
 {
   struct addrinfo hints;
   struct addrinfo *addresses;
-  struct addrinfo *address;
   char port_text[6];
   int socket_fd = -1;
-  int result;
 
   if (host == NULL || !socket_utils_format_port(port, port_text)) {
     return -1;
@@ -52,14 +48,14 @@ int socket_utils_connect(const char *host, uint16_t port)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
 
-  result = getaddrinfo(host, port_text, &hints, &addresses);
+  const int result = getaddrinfo(host, port_text, &hints, &addresses);
 
   if (result != 0) {
     return -1;
   }
 
   for (
-    address = addresses;
+    const struct addrinfo* address = addresses;
     address != NULL;
     address = address->ai_next
   )
@@ -93,15 +89,13 @@ int socket_utils_connect(const char *host, uint16_t port)
  * listens with the supplied backlog, and closes unsuccessful candidates
  * before returning.
  */
-int socket_utils_listen(uint16_t port, int backlog)
+int socket_utils_listen(const uint16_t port, const int backlog)
 {
   struct addrinfo hints;
   struct addrinfo *addresses;
-  struct addrinfo *address;
   char port_text[6];
   int listener = -1;
-  int reuse_address = 1;
-  int result;
+  const int reuse_address = 1;
 
   if (backlog <= 0 || !socket_utils_format_port(port, port_text)) {
     return -1;
@@ -113,14 +107,14 @@ int socket_utils_listen(uint16_t port, int backlog)
   hints.ai_protocol = IPPROTO_TCP;
   hints.ai_flags = AI_PASSIVE;
 
-  result = getaddrinfo(NULL, port_text, &hints, &addresses);
+  const int result = getaddrinfo(NULL, port_text, &hints, &addresses);
 
   if (result != 0) {
     return -1;
   }
 
   for (
-    address = addresses;
+    const struct addrinfo* address = addresses;
     address != NULL;
     address = address->ai_next
   )
@@ -164,7 +158,7 @@ int socket_utils_listen(uint16_t port, int backlog)
  * Repeats accept while it fails with EINTR and returns the resulting
  * connected descriptor or failure code.
  */
-int socket_utils_accept(int listener)
+int socket_utils_accept(const int listener)
 {
   int socket_fd;
 
@@ -182,9 +176,9 @@ int socket_utils_accept(int listener)
  * MSG_NOSIGNAL is available, and fails on other errors or a zero-byte send.
  */
 bool socket_utils_send_all(
-  int socket_fd,
+  const int socket_fd,
   const uint8_t *data,
-  size_t length
+  const size_t length
 )
 {
   size_t offset = 0U;
@@ -199,9 +193,7 @@ bool socket_utils_send_all(
   }
 
   while (offset < length) {
-    ssize_t sent;
-
-    sent = send(socket_fd, data + offset, length - offset, flags);
+    const ssize_t sent = send(socket_fd, data + offset, length - offset, flags);
 
     if (sent < 0) {
       if (errno == EINTR) {
@@ -230,9 +222,9 @@ bool socket_utils_send_all(
  * error.
  */
 socket_receive_result_t socket_utils_receive_all(
-  int socket_fd,
+  const int socket_fd,
   uint8_t *data,
-  size_t length
+  const size_t length
 )
 {
   size_t offset = 0U;
@@ -242,9 +234,7 @@ socket_receive_result_t socket_utils_receive_all(
   }
 
   while (offset < length) {
-    ssize_t received;
-
-    received = recv(socket_fd, data + offset, length - offset, 0);
+    const ssize_t received = recv(socket_fd, data + offset, length - offset, 0);
 
     if (received < 0) {
       if (errno == EINTR) {
