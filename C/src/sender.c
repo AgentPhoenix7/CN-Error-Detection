@@ -1,3 +1,5 @@
+// POSIX specifies this feature-test macro name; define it before system headers.
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c)
 #define _POSIX_C_SOURCE 200809L
 
 #include "config.h"
@@ -46,14 +48,13 @@ static void sender_print_usage(const char *program)
 static bool sender_parse_port(const char *text, uint16_t *port)
 {
   char *end;
-  unsigned long value;
 
   if (text == NULL || port == NULL || text[0] == '\0') {
     return false;
   }
 
   errno = 0;
-  value = strtoul(text, &end, 10);
+  const unsigned long value = strtoul(text, &end, 10);
 
   if (
     errno != 0 ||
@@ -77,14 +78,13 @@ static bool sender_parse_port(const char *text, uint16_t *port)
 static bool sender_parse_seed(const char *text, uint32_t *seed)
 {
   char *end;
-  unsigned long value;
 
   if (text == NULL || seed == NULL || text[0] == '\0') {
     return false;
   }
 
   errno = 0;
-  value = strtoul(text, &end, 0);
+  const unsigned long value = strtoul(text, &end, 0);
 
   if (errno != 0 || *end != '\0' || value > UINT32_MAX) {
     return false;
@@ -106,14 +106,13 @@ static bool sender_parse_error_interval(
 )
 {
   char *end;
-  unsigned long value;
 
   if (text == NULL || error_interval == NULL || text[0] == '\0') {
     return false;
   }
 
   errno = 0;
-  value = strtoul(text, &end, 10);
+  const unsigned long value = strtoul(text, &end, 10);
 
   if (errno != 0 || *end != '\0' || value == 0UL || value > UINT32_MAX) {
     return false;
@@ -200,9 +199,9 @@ static double sender_timeval_difference(
  * and sends prefix and frame completely; zero length sends the end marker.
  */
 static bool sender_send_record(
-  int socket_fd,
+  const int socket_fd,
   const uint8_t *frame,
-  size_t frame_length
+  const size_t frame_length
 )
 {
   uint8_t length_prefix[2];

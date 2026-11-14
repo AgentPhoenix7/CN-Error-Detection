@@ -1,3 +1,5 @@
+// POSIX specifies this feature-test macro name; define it before system headers.
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c)
 #define _POSIX_C_SOURCE 200112L
 
 #include "socket_utils.h"
