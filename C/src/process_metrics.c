@@ -1,33 +1,51 @@
 #include "process_metrics.h"
 
+#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /**
  * @brief Reads this executable's peak resident memory in KiB.
  *
- * Scans /proc/self/status for VmHWM, validates its positive numeric value
- * and kB unit, checks file errors, and commits the output only on success.
+ * Scans /proc/self/status for VmHWM, parses a positive long with strtol and
+ * checks conversion errors, the kB suffix, and file errors before committing
+ * the output. Only whitespace may follow the unit.
  */
 bool process_metrics_peak_rss_kb(long *peak_rss_kb)
 {
   char line[256];
   long peak = 0L;
   bool found = false;
-  FILE *status;
 
   if (peak_rss_kb == NULL) {
     return false;
   }
-  status = fopen("/proc/self/status", "r");
+  FILE* status = fopen("/proc/self/status", "r");
   if (status == NULL) {
     return false;
   }
   while (fgets(line, sizeof line, status) != NULL) {
     if (strncmp(line, "VmHWM:", 6U) == 0) {
-      char unit[3];
-      found = sscanf(line, "VmHWM: %ld %2s", &peak, unit) == 2 &&
-        strcmp(unit, "kB") == 0 && peak > 0L;
+      const char *value = line + 6U;
+      char *end;
+      errno = 0;
+      peak = strtol(value, &end, 10);
+      if (errno != 0 || end == value || peak <= 0L) {
+        break;
+      }
+      while (isspace((unsigned char)*end)) {
+        end++;
+      }
+      if (strncmp(end, "kB", 2U) != 0) {
+        break;
+      }
+      end += 2U;
+      while (isspace((unsigned char)*end)) {
+        end++;
+      }
+      found = *end == '\0';
       break;
     }
   }

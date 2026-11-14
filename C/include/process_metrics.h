@@ -12,8 +12,9 @@
  * Unlike getrusage's inherited high-water mark, VmHWM describes this
  * executable's address space. Requires readable /proc/self/status.
  *
- * Scans /proc/self/status for VmHWM, validates its positive numeric value
- * and kB unit, checks file errors, and commits the output only on success.
+ * Scans /proc/self/status for VmHWM, checks strtol conversion errors, requires
+ * a positive value with the kB unit and no trailing non-whitespace, and
+ * commits the output only after successful parsing and file access.
  *
  * @param[out] peak_rss_kb Peak RSS in KiB; unchanged on failure.
  * @return Whether a valid peak was read.
