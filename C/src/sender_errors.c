@@ -10,7 +10,7 @@
  */
 bool sender_errors_apply(
   uint8_t *frame,
-  size_t frame_length,
+  const size_t frame_length,
   sender_error_pattern_t pattern,
   error_injection_rng_t *rng
 )
